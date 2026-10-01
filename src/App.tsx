@@ -32,6 +32,7 @@ import { LevelUpModal } from './components/common/LevelUpModal';
 import { QuickNoteModal } from './components/common/QuickNoteModal';
 import { PlayerStatusCardModal } from './components/common/PlayerStatusCardModal';
 import { SmartwatchSyncModal } from './components/common/SmartwatchSyncModal';
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { OnboardingWizard } from './components/modules/onboarding/OnboardingWizard';
 
 // Modules
@@ -295,6 +296,7 @@ export function App() {
                   storage.saveDateModes(m);
                 }}
                 onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
+                onNavigate={handleNavigate}
               />
             )}
 
@@ -455,6 +457,9 @@ export function App() {
         isOpen={isPlayerCardOpen}
         onClose={() => setIsPlayerCardOpen(false)}
       />
+
+      {/* PWA Mobile App Installation Prompt */}
+      <PWAInstallPrompt />
 
       {/* FLOATING RPG SYSTEM TOAST NOTIFICATIONS */}
       <div className="fixed top-14 right-3 sm:right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full">

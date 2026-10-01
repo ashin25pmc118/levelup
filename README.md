@@ -1,4 +1,4 @@
-# ⚔️ Level Up / Better Me — Personal Life OS
+# ⚔️ Level Up: Personal Life OS
 
 > **A Gamified Self-Mastery & Real-Life RPG Operating System** designed to bridge physical capability, mental focus, social charisma, and academic/career discipline into a unified personal dashboard.
 
@@ -19,7 +19,7 @@
 
 ## 🌟 Executive Summary
 
-**Level Up / Better Me** treats real life as an RPG where **you are the character**. Every push-up completed, book chapter read, 25-minute deep focus block finished, or social comfort-zone challenge conquered earns real XP, levels up your avatar, and permanently develops your 9 core character attributes:
+**Level Up** treats real life as an RPG where **you are the character**. Every push-up completed, book chapter read, 25-minute deep focus block finished, or social comfort-zone challenge conquered earns real XP, levels up your avatar, and permanently develops your 9 core character attributes:
 
 1. **Strength** (Muscular power & compound bodyweight mastery)
 2. **Stamina** (Cardiovascular capacity & aerobic endurance)
@@ -103,7 +103,7 @@ Designed for beginners starting with ~10 push-ups and low stamina, built around 
   - Protects tendons and ligaments: reduces reps by 2 if form breaks down 2+ times; increases reps by +1 to +2 when clean and moderate; unlocks next progression when ceiling is mastered.
   - Cardio stamina ladder from 5 mins up to 35+ continuous minutes.
 - **Workout Generator (`workoutGenerator.ts`)**:
-  - Guarantees workouts are strictly **$\le 60$ minutes** across 3 tiers: **Express (15–20m)**, **Standard (30–40m)**, and **Full (45–55m)**.
+  - Guarantees workouts are strictly **<= 60 minutes** across 3 tiers: **Express (15–20m)**, **Standard (30–40m)**, and **Full (45–55m)**.
   - Weekly Split: *Mon: Push+Core, Tue: Legs+Cardio, Wed: Active Recovery, Thu: Pull+Core, Fri: Full Body, Sat: Calisthenics Skills, Sun: Rest*.
 - **Active Workout Session Player (`ActiveWorkoutSession.tsx`)**:
   - Sequential exercise runner, live rep counter, isometric hold countdown timer, automatic rest timer with coaching cues, interactive SVG visual guide, post-exercise evaluation questionnaire, and confetti finish screen.

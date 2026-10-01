@@ -39,6 +39,7 @@ import { evaluateExercisePerformance, EvaluationResult } from '../../../services
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
 import { smartwatch } from '../../../services/smartwatchService';
+import { haptics } from '../../../services/hapticFeedback';
 import { ExerciseVisualGuide } from '../../common/ExerciseVisualGuide';
 
 interface ActiveWorkoutSessionProps {
@@ -235,6 +236,7 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
   // Log current set
   const handleCompleteCurrentSet = () => {
     sounds.playClick();
+    haptics.medium();
     const setData: CompletedSetData = {
       setNumber: currentSetNumber,
       targetReps: currentItem.exercise.targetReps,
@@ -349,6 +351,7 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
   // Final Workout Finish flow
   const finishWorkoutFlow = () => {
     sounds.playLevelUp();
+    haptics.success();
     confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
 
     const totalMinutes = Math.max(1, Math.round(elapsedSeconds / 60));

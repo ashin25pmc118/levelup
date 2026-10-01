@@ -19,6 +19,7 @@ import {
 import { FocusSession } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
+import { haptics } from '../../../services/hapticFeedback';
 
 interface FocusModuleProps {
   onAwardXP: (amount: number, description: string, stat: 'focus' | 'discipline') => void;
@@ -40,6 +41,26 @@ export const FocusModule: React.FC<FocusModuleProps> = ({ onAwardXP }) => {
 
   // Ref for accurate background tab timing
   const targetEndTimeRef = useRef<number | null>(null);
+
+  // Screen Wake Lock API during deep focus sessions
+  useEffect(() => {
+    let wakeLockSentinel: any = null;
+    const requestWakeLock = async () => {
+      if (isRunning && 'wakeLock' in navigator) {
+        try {
+          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+        } catch {}
+      }
+    };
+    if (isRunning) {
+      requestWakeLock();
+    }
+    return () => {
+      if (wakeLockSentinel && typeof wakeLockSentinel.release === 'function') {
+        wakeLockSentinel.release().catch(() => {});
+      }
+    };
+  }, [isRunning]);
 
   // Re-sync timer on tab visibility change (solves background tab throttling)
   useEffect(() => {
@@ -138,6 +159,7 @@ export const FocusModule: React.FC<FocusModuleProps> = ({ onAwardXP }) => {
 
   const handleCompleteSession = () => {
     sounds.playTimerDone();
+    haptics.alert();
     sounds.stopAmbient();
     setIsRunning(false);
     setIsZenMode(false);
