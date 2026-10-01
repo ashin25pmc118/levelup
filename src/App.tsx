@@ -231,6 +231,8 @@ export function App() {
     ? 'theme-midnight-abyss'
     : settings.theme === 'clean-light'
     ? 'theme-clean-light'
+    : settings.theme === 'monochrome-pattern'
+    ? 'theme-monochrome-pattern'
     : 'theme-cyber-slate';
 
   useEffect(() => {

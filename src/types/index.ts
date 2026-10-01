@@ -335,7 +335,7 @@ export interface WeeklyReview {
 }
 
 export interface AppSettings {
-  theme: 'cyber-slate' | 'midnight-abyss' | 'clean-light';
+  theme: 'cyber-slate' | 'midnight-abyss' | 'clean-light' | 'monochrome-pattern';
   soundEnabled: boolean;
   soundVolume: number; // 0.0 to 1.0
   notificationsEnabled: boolean;

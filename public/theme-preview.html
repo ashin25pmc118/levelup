@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Preview & Suggestion — Level Up Life OS</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      box-sizing: border-box;
+    }
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* THEME 1: Black & White Pattern (Suggested New Theme) */
+    body.theme-monochrome-pattern {
+      background-color: #000000;
+      background-image: 
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.14) 1px, transparent 0),
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 20px 20px, 40px 40px, 40px 40px;
+      color: #ffffff;
+    }
+    .theme-monochrome-pattern .card {
+      background-color: #080808;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.9);
+    }
+    .theme-monochrome-pattern .badge {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+    .theme-monochrome-pattern .btn-primary {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ffffff;
+      font-weight: 800;
+    }
+    .theme-monochrome-pattern .btn-primary:hover {
+      background: #e4e4e7;
+    }
+    .theme-monochrome-pattern .btn-outline {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+    .theme-monochrome-pattern .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .theme-monochrome-pattern .progress-bar-fill {
+      background: #ffffff;
+    }
+    .theme-monochrome-pattern .accent-text {
+      color: #ffffff;
+    }
+    .theme-monochrome-pattern .subtext {
+      color: #a1a1aa;
+    }
+
+    /* THEME 2: Cyber Slate (Default) */
+    body.theme-cyber-slate {
+      background-color: #030712;
+      color: #f8fafc;
+      background-image: none;
+    }
+    .theme-cyber-slate .card {
+      background-color: #0f172a;
+      border: 1px solid #1e293b;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .theme-cyber-slate .badge {
+      background: rgba(6, 182, 212, 0.15);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .theme-cyber-slate .btn-primary {
+      background: #06b6d4;
+      color: #020617;
+      border: 1px solid #22d3ee;
+      font-weight: 800;
+    }
+    .theme-cyber-slate .btn-outline {
+      background: transparent;
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .theme-cyber-slate .progress-bar-fill {
+      background: linear-gradient(90deg, #06b6d4, #10b981);
+    }
+    .theme-cyber-slate .accent-text {
+      color: #22d3ee;
+    }
+    .theme-cyber-slate .subtext {
+      color: #94a3b8;
+    }
+
+    /* THEME 3: Midnight Abyss (Pitch OLED) */
+    body.theme-midnight-abyss {
+      background-color: #000000;
+      color: #fafafa;
+      background-image: none;
+    }
+    .theme-midnight-abyss .card {
+      background-color: #09090b;
+      border: 1px solid #27272a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    }
+    .theme-midnight-abyss .badge {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .theme-midnight-abyss .btn-primary {
+      background: #a855f7;
+      color: #ffffff;
+      border: 1px solid #c084fc;
+      font-weight: 800;
+    }
+    .theme-midnight-abyss .btn-outline {
+      background: transparent;
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .theme-midnight-abyss .progress-bar-fill {
+      background: linear-gradient(90deg, #a855f7, #ec4899);
+    }
+    .theme-midnight-abyss .accent-text {
+      color: #c084fc;
+    }
+    .theme-midnight-abyss .subtext {
+      color: #a1a1aa;
+    }
+
+    /* THEME 4: Clean Light (Daylight) */
+    body.theme-clean-light {
+      background-color: #f8fafc;
+      color: #0f172a;
+      background-image: none;
+    }
+    .theme-clean-light .card {
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+    .theme-clean-light .badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .theme-clean-light .btn-primary {
+      background: #0284c7;
+      color: #ffffff;
+      border: 1px solid #0284c7;
+      font-weight: 800;
+    }
+    .theme-clean-light .btn-outline {
+      background: transparent;
+      color: #0284c7;
+      border: 1px solid #bae6fd;
+    }
+    .theme-clean-light .progress-bar-fill {
+      background: #0284c7;
+    }
+    .theme-clean-light .accent-text {
+      color: #0284c7;
+    }
+    .theme-clean-light .subtext {
+      color: #64748b;
+    }
+
+    /* Layout & Components */
+    .container {
+      max-width: 680px;
+      width: 100%;
+    }
+
+    .top-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .theme-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .theme-btn {
+      padding: 8px 14px;
+      border-radius: 9999px;
+      border: 1px solid rgba(128, 128, 128, 0.3);
+      background: rgba(128, 128, 128, 0.1);
+      color: inherit;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .theme-btn.active {
+      outline: 2px solid currentColor;
+      background: rgba(128, 128, 128, 0.25);
+    }
+
+    .card {
+      padding: 20px;
+      border-radius: 18px;
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .title {
+      font-size: 17px;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+    }
+
+    .subtext {
+      font-size: 12px;
+      margin: 0;
+    }
+
+    .countdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+
+    .countdown-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(128, 128, 128, 0.2);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 10px 0 14px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 78%;
+      border-radius: 9999px;
+      transition: width 0.5s ease;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .notice-box {
+      border: 1px dashed rgba(128, 128, 128, 0.4);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 24px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .action-links {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body class="theme-monochrome-pattern">
+  <div class="container">
+    <!-- Header & Theme Selector -->
+    <div class="top-controls">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 900;">Theme Suggestion & Preview</h2>
+        <a href="/" class="theme-btn" style="text-decoration: none;">&larr; Open Main App</a>
+      </div>
+      <p class="subtext">
+        Test the new <strong>Black & White Pattern Theme</strong> live below. Switch between themes to compare. If you disagree or prefer adjustments, it can be deleted or tweaked anytime!
+      </p>
+
+      <div class="theme-pills">
+        <button class="theme-btn active" onclick="setTheme('theme-monochrome-pattern', this)">
+          &#9680; Black & White Pattern (New)
+        </button>
+        <button class="theme-btn" onclick="setTheme('theme-cyber-slate', this)">
+          &#9681; Cyber Slate (Default)
+        </button>
+        <button class="theme-btn" onclick="setTheme('theme-midnight-abyss', this)">
+          &#9679; Midnight Abyss (OLED)
+        </button>
+        <button class="theme-btn" onclick="setTheme('theme-clean-light', this)">
+          &#9675; Clean Light (Daylight)
+        </button>
+      </div>
+    </div>
+
+    <!-- SAMPLE CARD: WHAT TO DO NOW (Exact matching widget from user screenshot) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="subtext" style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+          &#9201; What to do now?
+        </span>
+        <span class="badge">CURRENT</span>
+      </div>
+
+      <h3 class="title">Plan Tomorrow + Prepare Study Materials</h3>
+
+      <div class="countdown-row">
+        <span class="subtext">21:45 - 22:15</span>
+        <span class="countdown-tag accent-text" id="liveCountdown">&#9203; 4 min 10sec left</span>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progressBar" style="width: 75%;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px;">
+        <span class="accent-text" style="font-weight: 700;">Reward: +15 XP on completion</span>
+        <span class="subtext" id="elapsedLabel">26m 50s elapsed</span>
+      </div>
+
+      <button class="btn btn-primary" onclick="alert('Action clicked!')">
+        &#128293; Launch Deep Focus &rarr;
+      </button>
+    </div>
+
+    <!-- SAMPLE CARD 2: Daily Quests -->
+    <div class="card">
+      <div class="card-header">
+        <span class="subtext" style="font-weight: 800; font-size: 11px; text-transform: uppercase;">
+          &#9889; Daily Quest System
+        </span>
+        <span class="badge">3 / 5 Done</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;">
+          <input type="checkbox" checked disabled style="width: 16px; height: 16px; accent-color: white;">
+          <span style="text-decoration: line-through; opacity: 0.6;">Morning Hydration & Sunlight</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;">
+          <input type="checkbox" checked disabled style="width: 16px; height: 16px; accent-color: white;">
+          <span style="text-decoration: line-through; opacity: 0.6;">20 Push-Ups Autoregulated Set</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;">
+          <input type="checkbox" style="width: 16px; height: 16px; accent-color: white;">
+          <span>Read 20 Pages of Non-Fiction Book</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Feedback / Agreement Note -->
+    <div class="notice-box">
+      <strong>Your Feedback Controls the Code:</strong>
+      <p style="margin: 6px 0;">
+        1. <strong>Do you like this Black & White Pattern Theme?</strong> It is already added to the theme cycler in your app header! You can click the theme icon anytime to switch.<br>
+        2. <strong>If you disagree or want it deleted:</strong> Just say <em>"delete theme"</em> or <em>"change pattern"</em> and it will be removed or customized instantly.
+      </p>
+      <div class="action-links">
+        <a href="/" class="theme-btn" style="text-decoration: none; background: white; color: black; font-weight: bold;">
+          Open App With New Theme
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme switching
+    function setTheme(themeClass, btn) {
+      document.body.className = themeClass;
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    // Live ticking countdown simulation (ticks down every 1 second)
+    let remainingSec = 250; // 4 minutes 10 seconds
+    const totalSec = 1800; // 30 minutes block
+
+    function tick() {
+      if (remainingSec > 0) {
+        remainingSec--;
+      } else {
+        remainingSec = 250;
+      }
+
+      const mins = Math.floor(remainingSec / 60);
+      const secs = remainingSec % 60;
+      const el = document.getElementById('liveCountdown');
+      if (el) {
+        el.innerText = `⏳ ${mins} min ${secs < 10 ? '0' : ''}${secs}sec left`;
+      }
+
+      const elapsed = totalSec - remainingSec;
+      const elapsedMins = Math.floor(elapsed / 60);
+      const elapsedSecs = elapsed % 60;
+      const elapsedEl = document.getElementById('elapsedLabel');
+      if (elapsedEl) {
+        elapsedEl.innerText = `${elapsedMins}m ${elapsedSecs}s elapsed`;
+      }
+
+      const pct = Math.min(100, Math.round((elapsed / totalSec) * 100));
+      const bar = document.getElementById('progressBar');
+      if (bar) {
+        bar.style.width = pct + '%';
+      }
+    }
+
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
