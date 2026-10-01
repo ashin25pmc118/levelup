@@ -1,8 +1,9 @@
-import React from 'react';
-import { Volume2, VolumeX, Flame, Plus, Shield, Sparkles, Sun, Moon, Palette } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Volume2, VolumeX, Flame, Plus, Shield, Sparkles, Sun, Moon, Palette, Watch } from 'lucide-react';
 import { UserProfile, AppSettings } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
+import { smartwatch } from '../../services/smartwatchService';
 
 interface HeaderHUDProps {
   profile: UserProfile;
@@ -11,6 +12,7 @@ interface HeaderHUDProps {
   onOpenQuickNote: () => void;
   onNavigate: (tab: string) => void;
   onOpenPlayerCard?: () => void;
+  onOpenSmartwatch?: () => void;
 }
 
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({
@@ -19,8 +21,16 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   onUpdateSettings,
   onOpenQuickNote,
   onNavigate,
-  onOpenPlayerCard
+  onOpenPlayerCard,
+  onOpenSmartwatch
 }) => {
+  const [swState, setSwState] = useState(smartwatch.state);
+
+  useEffect(() => {
+    smartwatch.setStatusListener(state => {
+      setSwState({ ...state });
+    });
+  }, []);
   const reqXP = getRequiredXPForLevel(profile.level);
   const xpPercent = Math.min(100, Math.round((profile.currentXP / reqXP) * 100));
   const { rank } = getRankTier(profile.level);
@@ -149,6 +159,33 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               <Palette className="w-4 h-4 text-cyan-400" />
             )}
           </button>
+
+          {/* Smartwatch / Health Sync Button */}
+          {onOpenSmartwatch && (
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onOpenSmartwatch();
+              }}
+              className={`p-2 rounded-lg border transition-all flex items-center gap-1.5 ${
+                swState.connected
+                  ? 'bg-rose-950/60 border-rose-500/50 text-rose-300 animate-pulse'
+                  : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-cyan-300 hover:border-cyan-500/40'
+              }`}
+              title={
+                swState.connected
+                  ? `Noise Watch Connected: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Active'}`
+                  : 'Noise Smartwatch & Step Sync'
+              }
+            >
+              <Watch className="w-4 h-4" />
+              {swState.connected && swState.heartRate && (
+                <span className="text-[11px] font-mono font-black text-rose-300 hidden md:inline">
+                  {swState.heartRate}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Audio Toggle */}
           <button

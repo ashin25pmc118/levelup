@@ -31,6 +31,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LevelUpModal } from './components/common/LevelUpModal';
 import { QuickNoteModal } from './components/common/QuickNoteModal';
 import { PlayerStatusCardModal } from './components/common/PlayerStatusCardModal';
+import { SmartwatchSyncModal } from './components/common/SmartwatchSyncModal';
 import { OnboardingWizard } from './components/modules/onboarding/OnboardingWizard';
 
 // Modules
@@ -78,6 +79,7 @@ export function App() {
   const [isQuickNoteOpen, setIsQuickNoteOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
+  const [isSmartwatchOpen, setIsSmartwatchOpen] = useState(false);
   const [toasts, setToasts] = useState<SystemToast[]>([]);
   const [levelUpProfile, setLevelUpProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !settings.onboardingCompleted);
@@ -238,6 +240,7 @@ export function App() {
         onOpenQuickNote={() => setIsQuickNoteOpen(true)}
         onNavigate={setCurrentTab}
         onOpenPlayerCard={() => setIsPlayerCardOpen(true)}
+        onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
       />
 
       <div className="flex flex-1 max-w-7xl w-full mx-auto">
@@ -409,6 +412,14 @@ export function App() {
         onClose={() => setIsMoreMenuOpen(false)}
         onSelectTab={setCurrentTab}
         currentTab={currentTab}
+        onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
+      />
+
+      {/* Noise Smartwatch & Health Sync Modal */}
+      <SmartwatchSyncModal
+        isOpen={isSmartwatchOpen}
+        onClose={() => setIsSmartwatchOpen(false)}
+        onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
       />
 
       {/* Global Quick Note Modal */}

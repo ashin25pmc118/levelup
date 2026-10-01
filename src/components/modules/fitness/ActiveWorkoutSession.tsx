@@ -20,7 +20,8 @@ import {
   Dumbbell,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Heart
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -37,6 +38,7 @@ import { getExerciseById } from '../../../services/fitness/exerciseRegistry';
 import { evaluateExercisePerformance, EvaluationResult } from '../../../services/fitness/progressionEngine';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
+import { smartwatch } from '../../../services/smartwatchService';
 import { ExerciseVisualGuide } from '../../common/ExerciseVisualGuide';
 
 interface ActiveWorkoutSessionProps {
@@ -92,6 +94,14 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
   // Workout Completed Screen
   const [isWorkoutCompleted, setIsWorkoutCompleted] = useState(false);
   const [finalWorkoutSummary, setFinalWorkoutSummary] = useState<CompletedWorkoutSession | null>(null);
+
+  // Smartwatch State
+  const [swState, setSwState] = useState(smartwatch.state);
+  useEffect(() => {
+    smartwatch.setStatusListener(st => {
+      setSwState({ ...st });
+    });
+  }, []);
 
   // Reset inputs when exercise changes
   useEffect(() => {
@@ -455,10 +465,49 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
           </div>
         </div>
 
-        {/* Stopwatch timer */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
-          <Clock className="w-4 h-4 text-cyan-400 animate-pulse" />
-          <span className="font-mono text-sm font-bold text-slate-200">{formatTime(elapsedSeconds)}</span>
+        <div className="flex items-center gap-2">
+          {/* Smartwatch Pulse */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              if (!swState.connected) {
+                smartwatch.connect();
+              } else {
+                smartwatch.disconnect();
+              }
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+              swState.connected
+                ? 'bg-rose-950/60 border-rose-500/50 text-rose-300'
+                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-cyan-300'
+            }`}
+            title={
+              swState.connected
+                ? `Noise Watch: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} (Tap to disconnect)`
+                : 'Pair Bluetooth Smartwatch for Live Heart Rate'
+            }
+          >
+            <Heart
+              className={`w-3.5 h-3.5 ${
+                swState.connected && swState.heartRate
+                  ? 'fill-rose-500 text-rose-400 animate-pulse'
+                  : 'text-slate-500'
+              }`}
+            />
+            <span className="font-mono font-bold text-[11px]">
+              {swState.connected
+                ? swState.heartRate
+                  ? `${swState.heartRate} BPM`
+                  : 'SYNCED'
+                : 'PAIR WATCH'}
+            </span>
+          </button>
+
+          {/* Stopwatch timer */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
+            <Clock className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <span className="font-mono text-sm font-bold text-slate-200">{formatTime(elapsedSeconds)}</span>
+          </div>
         </div>
       </header>
 
