@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Home,
   Calendar,
@@ -38,6 +38,10 @@ const NAV_ITEMS = [
 ];
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentTab, onSelectTab }) => {
+  const [activeLogo, setActiveLogo] = useState<string>(() => {
+    return localStorage.getItem('levelup_active_logo') || '/logos/wolf-split.png';
+  });
+
   const handleNav = (tabId: string) => {
     sounds.playClick();
     onSelectTab(tabId);
@@ -45,17 +49,26 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentTab, onSe
 
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 border-r border-slate-800/80 bg-slate-950/70 backdrop-blur-md p-4 min-h-[calc(100vh-57px)]">
-      {/* Brand Header */}
+      {/* Brand Header with Wolf Emblem */}
       <div className="flex items-center gap-2.5 px-3 py-2 mb-4 rounded-xl bg-slate-900/60 border border-slate-800/80">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-600 text-slate-950 font-black shadow-md shadow-cyan-500/20">
-          <Sparkles className="w-5 h-5 text-white" />
+        <div 
+          onClick={() => {
+            const nextLogo = activeLogo.includes('wolf-split') ? '/logos/wolf-howl.jpg' : '/logos/wolf-split.png';
+            setActiveLogo(nextLogo);
+            localStorage.setItem('levelup_active_logo', nextLogo);
+            sounds.playClick();
+          }}
+          className="flex items-center justify-center w-9 h-9 rounded-lg bg-black border border-white/20 overflow-hidden shadow-md shadow-white/5 shrink-0 cursor-pointer hover:border-white/50 transition-all active:scale-95"
+          title="Click to toggle between Yin-Yang Wolf & Howling Moon Wolf"
+        >
+          <img src={activeLogo} alt="Alpha Wolf Logo" className="w-full h-full object-cover" />
         </div>
         <div>
           <h1 className="text-sm font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
             LEVEL UP
           </h1>
           <p className="text-[10px] font-bold text-slate-400 tracking-wider">
-            BETTER ME RPG
+            ALPHA LIFE OS
           </p>
         </div>
       </div>

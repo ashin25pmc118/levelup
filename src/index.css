@@ -163,6 +163,101 @@
     stroke: #ffffff !important;
   }
 
+  /* Alpha Wolf Noir Theme (Wolf Yin-Yang High-Contrast with Lunar Dark Glow) */
+  .theme-alpha-wolf {
+    color-scheme: dark;
+    --app-bg: #000000;
+    --card-bg: #080808;
+    --card-border: rgba(255, 255, 255, 0.28);
+    --text-main: #ffffff;
+    --text-muted: #a1a1aa;
+    background-color: #000000 !important;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.12) 1px, transparent 0),
+      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px) !important;
+    background-size: 100% 450px, 22px 22px, 44px 44px, 44px 44px !important;
+    color: #ffffff !important;
+  }
+
+  .theme-alpha-wolf .bg-slate-950,
+  .theme-alpha-wolf .bg-slate-950\/85,
+  .theme-alpha-wolf .bg-slate-950\/60 {
+    background-color: #000000 !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+  }
+
+  .theme-alpha-wolf .bg-slate-900,
+  .theme-alpha-wolf .bg-slate-900\/90,
+  .theme-alpha-wolf .bg-slate-900\/80 {
+    background-color: #09090b !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.85) !important;
+  }
+
+  .theme-alpha-wolf .border-slate-800,
+  .theme-alpha-wolf .border-slate-800\/80,
+  .theme-alpha-wolf .border-slate-800\/50 {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  .theme-alpha-wolf .text-white {
+    color: #ffffff !important;
+  }
+
+  .theme-alpha-wolf .text-slate-100 {
+    color: #f4f4f5 !important;
+  }
+
+  .theme-alpha-wolf .text-slate-300 {
+    color: #e4e4e7 !important;
+  }
+
+  .theme-alpha-wolf .text-slate-400,
+  .theme-alpha-wolf .text-slate-500 {
+    color: #a1a1aa !important;
+  }
+
+  /* High contrast Alpha Wolf Accents */
+  .theme-alpha-wolf .text-cyan-400,
+  .theme-alpha-wolf .text-cyan-300,
+  .theme-alpha-wolf .text-purple-400,
+  .theme-alpha-wolf .text-purple-300,
+  .theme-alpha-wolf .text-emerald-400,
+  .theme-alpha-wolf .text-emerald-300,
+  .theme-alpha-wolf .text-amber-400 {
+    color: #ffffff !important;
+  }
+
+  .theme-alpha-wolf .bg-cyan-500,
+  .theme-alpha-wolf .bg-cyan-400 {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
+  }
+
+  .theme-alpha-wolf .border-cyan-500\/30,
+  .theme-alpha-wolf .border-cyan-500\/50,
+  .theme-alpha-wolf .border-purple-500\/30,
+  .theme-alpha-wolf .border-emerald-500\/30 {
+    border-color: rgba(255, 255, 255, 0.38) !important;
+  }
+
+  .theme-alpha-wolf .bg-cyan-950,
+  .theme-alpha-wolf .bg-cyan-950\/40,
+  .theme-alpha-wolf .bg-purple-950,
+  .theme-alpha-wolf .bg-emerald-950,
+  .theme-alpha-wolf .bg-amber-950 {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+  }
+
+  .theme-alpha-wolf .stroke-cyan-400 {
+    stroke: #ffffff !important;
+  }
+
   html {
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
