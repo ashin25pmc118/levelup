@@ -15,10 +15,15 @@
   body{
     background:radial-gradient(1200px 600px at 50% -10%, #16233d 0%, #0b1220 55%) no-repeat, var(--bg);
     color:var(--txt); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    min-height:100vh; padding-bottom:80px; -webkit-font-smoothing:antialiased;
+    min-height:100vh; padding-bottom:max(80px, calc(80px + env(safe-area-inset-bottom, 0px)));
+    padding-top:env(safe-area-inset-top, 0px); -webkit-font-smoothing:antialiased;
+  }
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){
+    *,::before,::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
   }
   #confetti{position:fixed;inset:0;pointer-events:none;z-index:9998}
-  #toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center}
+  #toasts{position:fixed;top:max(14px, env(safe-area-inset-top, 14px));left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center}
   .toast{background:rgba(17,26,44,.96);border:1px solid var(--cyan);color:var(--txt);
     padding:10px 18px;border-radius:12px;font-size:13.5px;font-weight:600;
     box-shadow:0 0 24px rgba(34,211,238,.35);animation:pop .25s ease}
@@ -301,7 +306,7 @@
     <div class="grid g2">
       <div class="card">
         <h2>Reflex <span>Tester</span></h2>
-        <div class="pad" id="pad">Tap to start</div>
+        <div class="pad" id="pad" tabindex="0" role="button" aria-label="Reaction time test pad. Tap or press Space or Enter when green.">Tap to start</div>
         <div class="row mt" style="justify-content:space-between">
           <span style="font-size:12px;color:var(--muted)">Best: <b style="color:var(--cyan)" id="rBest">—</b></span>
           <span style="font-size:12px;color:var(--muted)">Last: <b style="color:var(--txt)" id="rLast">—</b></span>
@@ -472,15 +477,17 @@ let parts = [], confRAF = null;
 function sizeConf(){ confCanvas.width = innerWidth; confCanvas.height = innerHeight; }
 sizeConf(); addEventListener('resize', sizeConf);
 
-function burst(n = 150){
+function burst(n = 80){
+  if(parts.length > 150) return; // Prevent performance drop
+  n = Math.min(100, Math.max(20, n));
   const colors = ['#22d3ee','#a78bfa','#34d399','#fbbf24','#f472b6','#f87171'];
   for(let i=0;i<n;i++){
     parts.push({
       x: innerWidth/2 + (Math.random()-0.5)*240,
       y: innerHeight*0.32,
-      vx: (Math.random()-0.5)*12,
-      vy: Math.random()*-13 - 3,
-      size: 5 + Math.random()*8,
+      vx: (Math.random()-0.5)*10,
+      vy: Math.random()*-11 - 3,
+      size: 5 + Math.random()*7,
       color: colors[(Math.random()*colors.length)|0],
       rot: Math.random()*Math.PI,
       vr: (Math.random()-0.5)*0.32,
@@ -668,10 +675,14 @@ function award(statKey, xp, label){
   const before = levelInfo().lvl;
   S.totalXP += xp;
   if(statKey && S.stats[statKey] != null){
-    S.stats[statKey] = Math.min(100, S.stats[statKey] + xp/2);
+    const curr = S.stats[statKey] || 10;
+    const gain = xp / (curr + 25);
+    S.stats[statKey] = Math.min(100, Math.round((curr + gain) * 10) / 10);
   }
   if(statKey !== 'discipline'){
-    S.stats.discipline = Math.min(100, S.stats.discipline + xp/12);
+    const disc = S.stats.discipline || 10;
+    const gain = xp / (disc + 60);
+    S.stats.discipline = Math.min(100, Math.round((disc + gain) * 10) / 10);
   }
   markActive();
   S.log.unshift({ t: Date.now(), label, xp, stat: statKey });
@@ -790,7 +801,7 @@ function renderQuests(){
       + '<div class="chk">'+(done?'✓':'')+'</div>'
       + '<div style="flex:1"><div class="qt">'+q.icon+' '+q.title+'</div>'
       + '<div class="qs">'+q.xp+' XP → '+STAT_MAP[q.stat].label+'</div></div>'
-      + (q.custom ? '<button class="mini" data-delq="'+q.id+'">✕</button>' : '')
+      + (q.custom ? '<button class="mini" data-delq="'+q.id+'" onclick="event.stopPropagation()" aria-label="Delete custom quest">✕</button>' : '')
       + '</div>';
   }).join('');
   el('qStreak').textContent = S.streak;
@@ -904,6 +915,7 @@ document.addEventListener('click', e => {
 
 // Quests
 el('questList').addEventListener('click', e => {
+  if(e.target.closest('[data-delq]')) return;
   const row = e.target.closest('[data-qid]');
   if(!row) return;
   const id = row.dataset.qid;
@@ -1039,10 +1051,33 @@ document.querySelectorAll('[data-noise]').forEach(b => {
   });
 });
 
+/* Background Tab Synchronization */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && T.running){
+    const left = (T.endAt - Date.now()) / 1000;
+    if(left <= 0){
+      clearInterval(T.iv);
+      T.iv = null;
+      timerComplete();
+    } else {
+      T.remain = left;
+      paintTimer();
+    }
+  } else if(document.hidden){
+    if(confRAF){
+      cancelAnimationFrame(confRAF);
+      confRAF = null;
+      parts = [];
+      if(cctx) cctx.clearRect(0,0,confCanvas.width,confCanvas.height);
+    }
+  }
+});
+
 /* ---------- Reflex tester ---------- */
 let rState = 'idle', rTimer = null, rStart = 0;
 const pad = el('pad');
-pad.addEventListener('click', () => {
+
+function handlePadAction(){
   actx();
   if(rState === 'idle' || rState === 'result'){
     rState = 'waiting';
@@ -1062,7 +1097,7 @@ pad.addEventListener('click', () => {
     clearTimeout(rTimer);
     rState = 'idle';
     pad.className = 'pad';
-    pad.textContent = 'Too early — tap to retry';
+    pad.textContent = 'Too early — tap or press Space to retry';
     return;
   }
   if(rState === 'go'){
@@ -1074,9 +1109,17 @@ pad.addEventListener('click', () => {
     const isPR = !S.reflexBest || ms < S.reflexBest;
     if(isPR) S.reflexBest = ms;
     save();
-    if(isPR){ burst(80); toast('⚡ New reflex PR: ' + ms + ' ms'); }
+    if(isPR){ burst(70); toast('⚡ New reflex PR: ' + ms + ' ms'); }
     award('reflex', isPR ? 18 : 10, 'Reflex test ' + ms + ' ms');
     pad.textContent = ms + ' ms — tap to retry';
+  }
+}
+
+pad.addEventListener('click', handlePadAction);
+pad.addEventListener('keydown', e => {
+  if(e.key === ' ' || e.key === 'Enter'){
+    e.preventDefault();
+    handlePadAction();
   }
 });
 
@@ -1144,14 +1187,39 @@ el('impFile').addEventListener('change', e => {
   r.onload = () => {
     try{
       const parsed = JSON.parse(r.result);
-      if(typeof parsed !== 'object' || !parsed.stats) throw new Error('bad shape');
-      S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), parsed);
-      S.stats = Object.assign({}, DEFAULT_STATE.stats, parsed.stats || {});
-      S.prefs = Object.assign({}, DEFAULT_STATE.prefs, parsed.prefs || {});
+      if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !parsed.stats || typeof parsed.stats !== 'object'){
+        throw new Error('Malformed backup JSON structure');
+      }
+      const safeState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      safeState.totalXP = typeof parsed.totalXP === 'number' ? parsed.totalXP : 0;
+      safeState.streak = typeof parsed.streak === 'number' ? parsed.streak : 0;
+      safeState.bestStreak = typeof parsed.bestStreak === 'number' ? parsed.bestStreak : 0;
+      safeState.shields = typeof parsed.shields === 'number' ? parsed.shields : 2;
+      safeState.focusMinutes = typeof parsed.focusMinutes === 'number' ? parsed.focusMinutes : 0;
+      safeState.sessions = typeof parsed.sessions === 'number' ? parsed.sessions : 0;
+      safeState.lastActive = typeof parsed.lastActive === 'string' ? parsed.lastActive : null;
+      safeState.reflexBest = typeof parsed.reflexBest === 'number' ? parsed.reflexBest : null;
+      safeState.reflexLast = typeof parsed.reflexLast === 'number' ? parsed.reflexLast : null;
+      safeState.customQuests = Array.isArray(parsed.customQuests) ? parsed.customQuests : [];
+      safeState.notes = Array.isArray(parsed.notes) ? parsed.notes : [];
+      safeState.log = Array.isArray(parsed.log) ? parsed.log : [];
+
+      // Validate & clamp stats
+      for(const k of Object.keys(safeState.stats)){
+        if(typeof parsed.stats[k] === 'number'){
+          safeState.stats[k] = Math.max(1, Math.min(100, Math.round(parsed.stats[k] * 10) / 10));
+        }
+      }
+      if(parsed.prefs && typeof parsed.prefs === 'object'){
+        safeState.prefs.dayBoundary = typeof parsed.prefs.dayBoundary === 'number' ? parsed.prefs.dayBoundary : 0;
+        safeState.prefs.sfx = parsed.prefs.sfx !== false;
+      }
+
+      S = safeState;
       save(); render();
-      toast('⬆ Backup restored');
+      toast('⬆ Backup restored and verified successfully');
     }catch(err){
-      toast('❌ Invalid backup file');
+      toast('❌ Invalid or corrupted backup file');
     }
   };
   r.readAsText(f);

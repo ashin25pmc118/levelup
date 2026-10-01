@@ -366,4 +366,8 @@ export interface FullBackupData {
   achievements: Achievement[];
   weeklyReviews: WeeklyReview[];
   settings: AppSettings;
+  fitnessProfile?: import('../services/fitness/fitnessTypes').UserFitnessProfile;
+  progressionStates?: Record<string, import('../services/fitness/fitnessTypes').ExerciseProgressionState>;
+  benchmarkRecords?: import('../services/fitness/fitnessTypes').BenchmarkRecord[];
+  fitnessSessions?: import('../services/fitness/fitnessTypes').CompletedWorkoutSession[];
 }

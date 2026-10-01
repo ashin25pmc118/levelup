@@ -118,13 +118,14 @@ export function processXPGain(
     }
   }
 
-  // Update target stats (1-100 scale), supporting multi-stat synergy
+  // Update target stats (1-100 scale), with diminishing returns as stats increase
   const targets: StatType[] = Array.isArray(statTarget) ? statTarget : [statTarget];
   const newStats = { ...profile.stats };
-  const statGain = Math.min(100, Math.max(0.2, (actualXp * 0.04) / targets.length));
 
   targets.forEach(target => {
     const currentVal = profile.stats[target] ?? 10;
+    // Diminishing returns: stat progression naturally slows down as mastery approaches 100
+    const statGain = Math.max(0.05, (actualXp / (currentVal + 25)) / targets.length);
     const nextVal = Math.min(100, currentVal + statGain);
     newStats[target] = Math.round(nextVal * 10) / 10;
   });

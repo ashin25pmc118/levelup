@@ -128,11 +128,50 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
     };
   }, []);
 
+  // Timestamp refs for background tab compensation
+  const workoutStartTimeRef = useRef<number>(Date.now());
+  const restEndTimeRef = useRef<number | null>(null);
+  const holdEndTimeRef = useRef<number | null>(null);
+
+  // Sync timers on tab visibility change (solves browser background throttling)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        // Sync overall stopwatch
+        if (!isWorkoutCompleted) {
+          setElapsedSeconds(Math.floor((Date.now() - workoutStartTimeRef.current) / 1000));
+        }
+        // Sync rest timer
+        if (isResting && restEndTimeRef.current) {
+          const remaining = Math.max(0, Math.round((restEndTimeRef.current - Date.now()) / 1000));
+          setRestSecondsLeft(remaining);
+          if (remaining <= 0) {
+            setIsResting(false);
+            restEndTimeRef.current = null;
+            sounds.playTimerDone();
+          }
+        }
+        // Sync hold timer
+        if (holdTimerActive && holdEndTimeRef.current) {
+          const remaining = Math.max(0, Math.round((holdEndTimeRef.current - Date.now()) / 1000));
+          setHoldSecondsLeft(remaining);
+          if (remaining <= 0) {
+            setHoldTimerActive(false);
+            holdEndTimeRef.current = null;
+            sounds.playTimerDone();
+          }
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isWorkoutCompleted, isResting, holdTimerActive]);
+
   // Overall workout elapsed stopwatch
   useEffect(() => {
     if (isWorkoutCompleted) return;
     const interval = setInterval(() => {
-      setElapsedSeconds(s => s + 1);
+      setElapsedSeconds(Math.floor((Date.now() - workoutStartTimeRef.current) / 1000));
     }, 1000);
     return () => clearInterval(interval);
   }, [isWorkoutCompleted]);
@@ -140,30 +179,42 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
   // Rest Timer countdown
   useEffect(() => {
     if (!isResting) return;
-    if (restSecondsLeft <= 0) {
-      setIsResting(false);
-      sounds.playTimerDone();
-      return;
+    if (!restEndTimeRef.current) {
+      restEndTimeRef.current = Date.now() + restSecondsLeft * 1000;
     }
     const interval = setInterval(() => {
-      setRestSecondsLeft(s => s - 1);
-    }, 1000);
+      if (restEndTimeRef.current) {
+        const remaining = Math.max(0, Math.round((restEndTimeRef.current - Date.now()) / 1000));
+        setRestSecondsLeft(remaining);
+        if (remaining <= 0) {
+          setIsResting(false);
+          restEndTimeRef.current = null;
+          sounds.playTimerDone();
+        }
+      }
+    }, 500);
     return () => clearInterval(interval);
-  }, [isResting, restSecondsLeft]);
+  }, [isResting]);
 
   // Hold Timer countdown for timed exercises (e.g. plank)
   useEffect(() => {
     if (!holdTimerActive) return;
-    if (holdSecondsLeft <= 0) {
-      setHoldTimerActive(false);
-      sounds.playTimerDone();
-      return;
+    if (!holdEndTimeRef.current) {
+      holdEndTimeRef.current = Date.now() + holdSecondsLeft * 1000;
     }
     const interval = setInterval(() => {
-      setHoldSecondsLeft(s => s - 1);
-    }, 1000);
+      if (holdEndTimeRef.current) {
+        const remaining = Math.max(0, Math.round((holdEndTimeRef.current - Date.now()) / 1000));
+        setHoldSecondsLeft(remaining);
+        if (remaining <= 0) {
+          setHoldTimerActive(false);
+          holdEndTimeRef.current = null;
+          sounds.playTimerDone();
+        }
+      }
+    }, 500);
     return () => clearInterval(interval);
-  }, [holdTimerActive, holdSecondsLeft]);
+  }, [holdTimerActive]);
 
   const formatTime = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);

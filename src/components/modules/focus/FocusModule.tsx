@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Brain,
   Play,
@@ -38,12 +38,39 @@ export const FocusModule: React.FC<FocusModuleProps> = ({ onAwardXP }) => {
   // Fullscreen Zen Mode state
   const [isZenMode, setIsZenMode] = useState<boolean>(false);
 
+  // Ref for accurate background tab timing
+  const targetEndTimeRef = useRef<number | null>(null);
+
+  // Re-sync timer on tab visibility change (solves background tab throttling)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && isRunning && targetEndTimeRef.current) {
+        const remaining = Math.max(0, Math.round((targetEndTimeRef.current - Date.now()) / 1000));
+        setSecondsLeft(remaining);
+        if (remaining <= 0) {
+          handleCompleteSession();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isRunning]);
+
   useEffect(() => {
     let interval: any | null = null;
     if (isRunning && secondsLeft > 0) {
+      if (!targetEndTimeRef.current) {
+        targetEndTimeRef.current = Date.now() + secondsLeft * 1000;
+      }
       interval = setInterval(() => {
-        setSecondsLeft(s => s - 1);
-      }, 1000);
+        if (targetEndTimeRef.current) {
+          const remaining = Math.max(0, Math.round((targetEndTimeRef.current - Date.now()) / 1000));
+          setSecondsLeft(remaining);
+          if (remaining <= 0) {
+            handleCompleteSession();
+          }
+        }
+      }, 500);
     } else if (secondsLeft === 0 && isRunning) {
       handleCompleteSession();
     }
@@ -64,16 +91,23 @@ export const FocusModule: React.FC<FocusModuleProps> = ({ onAwardXP }) => {
     const nextRunning = !isRunning;
     setIsRunning(nextRunning);
 
-    if (nextRunning && ambientType !== 'off') {
-      sounds.startAmbient(ambientType, ambientVolume);
-    } else if (!nextRunning && ambientType !== 'off') {
-      sounds.stopAmbient();
+    if (nextRunning) {
+      targetEndTimeRef.current = Date.now() + secondsLeft * 1000;
+      if (ambientType !== 'off') {
+        sounds.startAmbient(ambientType, ambientVolume);
+      }
+    } else {
+      targetEndTimeRef.current = null;
+      if (ambientType !== 'off') {
+        sounds.stopAmbient();
+      }
     }
   };
 
   const handleReset = (mins: number = selectedDuration) => {
     sounds.playClick();
     setIsRunning(false);
+    targetEndTimeRef.current = null;
     setSelectedDuration(mins);
     setSecondsLeft(mins * 60);
     setDistractionCount(0);

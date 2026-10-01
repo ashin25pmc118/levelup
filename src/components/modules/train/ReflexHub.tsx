@@ -200,8 +200,21 @@ export const ReflexHub: React.FC<ReflexHubProps> = ({
 
             {/* Click Arena */}
             <div
+              tabIndex={0}
+              role="button"
+              aria-label="Reaction time testing arena. Tap or press Space or Enter when screen turns green."
               onClick={reflexState === 'ready' || reflexState === 'waiting' ? handleReflexClick : undefined}
-              className={`w-full h-56 rounded-2xl border-2 flex flex-col items-center justify-center cursor-pointer transition-colors duration-100 select-none shadow-xl ${
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  if (reflexState === 'ready' || reflexState === 'waiting') {
+                    handleReflexClick();
+                  } else if (reflexState === 'idle' || reflexState === 'result') {
+                    startReflexTest();
+                  }
+                }
+              }}
+              className={`w-full h-56 rounded-2xl border-2 flex flex-col items-center justify-center cursor-pointer transition-colors duration-100 select-none shadow-xl focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none ${
                 reflexState === 'idle'
                   ? 'bg-slate-950 border-slate-800 text-slate-400'
                   : reflexState === 'waiting'

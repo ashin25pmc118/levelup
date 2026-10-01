@@ -2094,11 +2094,11 @@ class StorageService {
   }
 
   // ==========================================
-  // FULL JSON EXPORT / UPLOAD / CHANGE MANAGER
+  // FULL JSON EXPORT / UPLOAD / CHANGE MANAGER & MIGRATION
   // ==========================================
   public exportFullBackup(): string {
     const fullData: FullBackupData = {
-      version: '1.0.0',
+      version: '2.0.0',
       exportedAt: new Date().toISOString(),
       profile: this.getProfile(),
       timetableTemplates: this.getTemplates(),
@@ -2118,38 +2118,124 @@ class StorageService {
       xpTransactions: this.getXPTransactions(),
       achievements: this.getAchievements(),
       weeklyReviews: this.getWeeklyReviews(),
-      settings: this.getSettings()
+      settings: this.getSettings(),
+      fitnessProfile: this.getFitnessProfile(),
+      progressionStates: this.getProgressionStates(),
+      benchmarkRecords: this.getBenchmarkRecords(),
+      fitnessSessions: this.getCompletedFitnessSessions()
     };
     return JSON.stringify(fullData, null, 2);
   }
 
+  public validateAndMigrateBackup(raw: unknown): { valid: boolean; data?: FullBackupData; message?: string } {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return { valid: false, message: 'Invalid backup file: Payload must be a valid JSON object.' };
+    }
+
+    const input = raw as Record<string, any>;
+
+    // Schema version check & migration pipeline
+    const detectedVersion = typeof input.version === 'string' ? input.version : '1.0.0';
+
+    // Validate profile if provided
+    let profile = input.profile;
+    if (profile && typeof profile === 'object') {
+      if (typeof profile.level !== 'number' || typeof profile.totalXP !== 'number') {
+        return { valid: false, message: 'Invalid backup file: Profile data is corrupted (invalid level/totalXP).' };
+      }
+      // Migration: ensure streakShields exists
+      if (typeof profile.streakShields !== 'number') {
+        profile.streakShields = 1;
+      }
+      if (!profile.stats || typeof profile.stats !== 'object') {
+        profile.stats = DEFAULT_PROFILE.stats;
+      }
+    }
+
+    // Migration for fitness profile
+    let fitnessProfile = input.fitnessProfile;
+    if (fitnessProfile && typeof fitnessProfile === 'object') {
+      if (!Array.isArray(fitnessProfile.masteredSkillIds)) {
+        fitnessProfile.masteredSkillIds = [];
+      }
+      if (typeof fitnessProfile.currentPhase !== 'number') {
+        fitnessProfile.currentPhase = 1;
+      }
+    }
+
+    const sanitized: FullBackupData = {
+      version: '2.0.0',
+      exportedAt: typeof input.exportedAt === 'string' ? input.exportedAt : new Date().toISOString(),
+      profile: profile || this.getProfile(),
+      timetableTemplates: Array.isArray(input.timetableTemplates) ? input.timetableTemplates : this.getTemplates(),
+      timetableEvents: Array.isArray(input.timetableEvents) ? input.timetableEvents : this.getEvents(),
+      dateModeMappings: Array.isArray(input.dateModeMappings) ? input.dateModeMappings : this.getDateModes(),
+      exercises: Array.isArray(input.exercises) ? input.exercises : this.getExercises(),
+      workoutLogs: Array.isArray(input.workoutLogs) ? input.workoutLogs : this.getWorkoutLogs(),
+      cardioSessions: Array.isArray(input.cardioSessions) ? input.cardioSessions : this.getCardioSessions(),
+      focusSessions: Array.isArray(input.focusSessions) ? input.focusSessions : this.getFocusSessions(),
+      reflexScores: Array.isArray(input.reflexScores) ? input.reflexScores : this.getReflexScores(),
+      confidenceQuests: Array.isArray(input.confidenceQuests) ? input.confidenceQuests : this.getConfidenceQuests(),
+      dailyQuests: Array.isArray(input.dailyQuests) ? input.dailyQuests : this.getDailyQuests(),
+      skills: Array.isArray(input.skills) ? input.skills : this.getSkills(),
+      skillSessions: Array.isArray(input.skillSessions) ? input.skillSessions : [],
+      notes: Array.isArray(input.notes) ? input.notes : this.getNotes(),
+      reminders: Array.isArray(input.reminders) ? input.reminders : this.getReminders(),
+      xpTransactions: Array.isArray(input.xpTransactions) ? input.xpTransactions : this.getXPTransactions(),
+      achievements: Array.isArray(input.achievements) ? input.achievements : this.getAchievements(),
+      weeklyReviews: Array.isArray(input.weeklyReviews) ? input.weeklyReviews : this.getWeeklyReviews(),
+      settings: input.settings && typeof input.settings === 'object' ? input.settings : this.getSettings(),
+      fitnessProfile: fitnessProfile || this.getFitnessProfile(),
+      progressionStates: input.progressionStates && typeof input.progressionStates === 'object' && !Array.isArray(input.progressionStates) ? input.progressionStates : this.getProgressionStates(),
+      benchmarkRecords: Array.isArray(input.benchmarkRecords) ? input.benchmarkRecords : this.getBenchmarkRecords(),
+      fitnessSessions: Array.isArray(input.fitnessSessions) ? input.fitnessSessions : this.getCompletedFitnessSessions()
+    };
+
+    return {
+      valid: true,
+      data: sanitized,
+      message: detectedVersion !== '2.0.0' ? `Migrated data from v${detectedVersion} to v2.0.0.` : undefined
+    };
+  }
+
   public importFullBackup(jsonContent: string): { success: boolean; message: string } {
     try {
-      const data = JSON.parse(jsonContent) as Partial<FullBackupData>;
-      if (!data || typeof data !== 'object') {
-        return { success: false, message: 'Invalid JSON format: Must be a JSON object.' };
+      const parsed = JSON.parse(jsonContent);
+      const validation = this.validateAndMigrateBackup(parsed);
+
+      if (!validation.valid || !validation.data) {
+        return { success: false, message: validation.message || 'Validation failed for backup file.' };
       }
 
+      const data = validation.data;
       if (data.profile) this.saveProfile(data.profile);
-      if (Array.isArray(data.timetableTemplates)) this.saveTemplates(data.timetableTemplates);
-      if (Array.isArray(data.timetableEvents)) this.saveEvents(data.timetableEvents);
-      if (Array.isArray(data.dateModeMappings)) this.saveDateModes(data.dateModeMappings);
-      if (Array.isArray(data.exercises)) this.saveExercises(data.exercises);
-      if (Array.isArray(data.workoutLogs)) this.saveWorkoutLogs(data.workoutLogs);
-      if (Array.isArray(data.cardioSessions)) this.saveCardioSessions(data.cardioSessions);
-      if (Array.isArray(data.focusSessions)) this.saveFocusSessions(data.focusSessions);
-      if (Array.isArray(data.reflexScores)) this.saveReflexScores(data.reflexScores);
-      if (Array.isArray(data.confidenceQuests)) this.saveConfidenceQuests(data.confidenceQuests);
-      if (Array.isArray(data.dailyQuests)) this.saveDailyQuests(data.dailyQuests);
-      if (Array.isArray(data.skills)) this.saveSkills(data.skills);
-      if (Array.isArray(data.notes)) this.saveNotes(data.notes);
-      if (Array.isArray(data.reminders)) this.saveReminders(data.reminders);
-      if (Array.isArray(data.xpTransactions)) this.setItem(STORAGE_KEYS.XP_TRANSACTIONS, data.xpTransactions);
-      if (Array.isArray(data.achievements)) this.saveAchievements(data.achievements);
-      if (Array.isArray(data.weeklyReviews)) this.saveWeeklyReviews(data.weeklyReviews);
+      if (data.timetableTemplates) this.saveTemplates(data.timetableTemplates);
+      if (data.timetableEvents) this.saveEvents(data.timetableEvents);
+      if (data.dateModeMappings) this.saveDateModes(data.dateModeMappings);
+      if (data.exercises) this.saveExercises(data.exercises);
+      if (data.workoutLogs) this.saveWorkoutLogs(data.workoutLogs);
+      if (data.cardioSessions) this.saveCardioSessions(data.cardioSessions);
+      if (data.focusSessions) this.saveFocusSessions(data.focusSessions);
+      if (data.reflexScores) this.saveReflexScores(data.reflexScores);
+      if (data.confidenceQuests) this.saveConfidenceQuests(data.confidenceQuests);
+      if (data.dailyQuests) this.saveDailyQuests(data.dailyQuests);
+      if (data.skills) this.saveSkills(data.skills);
+      if (data.skillSessions) this.setItem(STORAGE_KEYS.SKILL_SESSIONS, data.skillSessions);
+      if (data.notes) this.saveNotes(data.notes);
+      if (data.reminders) this.saveReminders(data.reminders);
+      if (data.xpTransactions) this.setItem(STORAGE_KEYS.XP_TRANSACTIONS, data.xpTransactions);
+      if (data.achievements) this.saveAchievements(data.achievements);
+      if (data.weeklyReviews) this.saveWeeklyReviews(data.weeklyReviews);
       if (data.settings) this.saveSettings(data.settings);
+      if (data.fitnessProfile) this.saveFitnessProfile(data.fitnessProfile);
+      if (data.progressionStates) this.saveProgressionStates(data.progressionStates);
+      if (data.benchmarkRecords) this.setItem(STORAGE_KEYS.BENCHMARK_RECORDS, data.benchmarkRecords);
+      if (data.fitnessSessions) this.setItem(STORAGE_KEYS.FITNESS_SESSIONS, data.fitnessSessions);
 
-      return { success: true, message: 'Data imported and restored successfully!' };
+      const msg = validation.message
+        ? `Backup restored successfully! (${validation.message})`
+        : 'All data and fitness progressions imported and restored successfully!';
+      return { success: true, message: msg };
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       return { success: false, message: `Failed to import JSON: ${errorMsg}` };
