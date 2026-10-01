@@ -26,6 +26,7 @@ import {
   AppSettings
 } from '../../../types';
 import { sounds } from '../../../services/soundEffects';
+import { storage } from '../../../services/storageService';
 
 interface DashboardViewProps {
   profile: UserProfile;
@@ -108,6 +109,76 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const currentEvent = todayEvents.find(e => e.startTime <= currentTimeStr && e.endTime >= currentTimeStr);
   const nextEvent = todayEvents.find(e => e.startTime > currentTimeStr);
 
+  // 🚀 Progressive Disclosure: Compute context-aware single "Next Action"
+  const primaryNextAction = React.useMemo(() => {
+    // 1. If active timetable event right now
+    if (currentEvent) {
+      return {
+        badge: 'ACTIVE TIMETABLE BLOCK',
+        badgeColor: 'bg-cyan-950 text-cyan-300 border-cyan-500/30',
+        title: currentEvent.title,
+        desc: `Scheduled for ${currentEvent.startTime} - ${currentEvent.endTime}. Lock in for deep work.`,
+        actionLabel: 'START DEEP FOCUS (25M)',
+        xp: '+25 XP',
+        icon: Brain,
+        onAction: () => onNavigate('focus')
+      };
+    }
+    // 2. If daily calisthenics workout has not been logged today
+    const fitnessProfile = storage.getFitnessProfile();
+    const today = new Date().toISOString().split('T')[0];
+    if (fitnessProfile.lastWorkoutDate !== today) {
+      return {
+        badge: 'BODYWEIGHT TRAINING RECOMMENDED',
+        badgeColor: 'bg-orange-950 text-orange-300 border-orange-500/30',
+        title: "Today's Calisthenics Routine",
+        desc: `Phase ${fitnessProfile.currentPhase} • Week ${fitnessProfile.currentWeek} (${fitnessProfile.environment.toUpperCase()} Mode). Autoregulated sets to build strength.`,
+        actionLabel: 'LAUNCH WORKOUT PLAYER',
+        xp: '+35 XP',
+        icon: Dumbbell,
+        onAction: () => onNavigate('train')
+      };
+    }
+    // 3. If reading goal is not met
+    if (readingPages < targetPages) {
+      return {
+        badge: 'KNOWLEDGE & READING HABIT',
+        badgeColor: 'bg-blue-950 text-blue-300 border-blue-500/30',
+        title: `Read ${targetPages - readingPages} More Pages of "${readingBook}"`,
+        desc: 'Sharpen your mind and expand your vocabulary with 15 minutes of deliberate reading.',
+        actionLabel: 'LOG +5 PAGES NOW',
+        xp: '+20 XP',
+        icon: BookOpen,
+        onAction: () => handleAddPages(5)
+      };
+    }
+    // 4. If daily quests remain
+    const uncompletedQuest = dailyQuests.find(q => !q.isCompleted);
+    if (uncompletedQuest) {
+      return {
+        badge: 'DAILY QUEST READY',
+        badgeColor: 'bg-purple-950 text-purple-300 border-purple-500/30',
+        title: uncompletedQuest.title,
+        desc: uncompletedQuest.description || 'Complete this task to keep your streak shield charged.',
+        actionLabel: 'VIEW QUESTS',
+        xp: `+${uncompletedQuest.targetXp} XP`,
+        icon: CheckCircle2,
+        onAction: () => onNavigate('quests')
+      };
+    }
+    // 5. Evening or completed all
+    return {
+      badge: 'ALL ESSENTIALS COMPLETED',
+      badgeColor: 'bg-emerald-950 text-emerald-300 border-emerald-500/30',
+      title: 'Great Job! Rest & Recharge',
+      desc: 'You hit today’s targets. Take a walk, test your reflexes, or log sleep recovery.',
+      actionLabel: 'INSPECT PROGRESS & XP',
+      xp: 'STREAK SAFE',
+      icon: Sparkles,
+      onAction: () => onNavigate('progress')
+    };
+  }, [currentEvent, readingPages, readingBook, targetPages, dailyQuests]);
+
   return (
     <div className="space-y-5 animate-in fade-in duration-300 pb-12">
       {/* Top Banner: Real-Life Character Progression Status */}
@@ -171,6 +242,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 🚀 PRIMARY "NEXT ACTION" HERO CARD (Progressive Disclosure) */}
+      <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 border-2 border-cyan-500/40 shadow-xl shadow-cyan-950/25 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5 max-w-xl">
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider border ${primaryNextAction.badgeColor}`}>
+              {primaryNextAction.badge}
+            </span>
+            <span className="text-xs font-mono font-bold text-amber-300">
+              {primaryNextAction.xp}
+            </span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
+            <primaryNextAction.icon className="w-5 h-5 text-cyan-400 shrink-0" />
+            <span>{primaryNextAction.title}</span>
+          </h2>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            {primaryNextAction.desc}
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            sounds.playClick();
+            primaryNextAction.onAction();
+          }}
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer shrink-0"
+        >
+          <span>{primaryNextAction.actionLabel}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
 
       {/* THREE ESSENTIAL RPG QUESTIONS: What to do now? What next? How am I progressing? */}

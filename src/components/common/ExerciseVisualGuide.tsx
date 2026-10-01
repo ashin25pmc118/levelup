@@ -65,6 +65,7 @@ export const ExerciseVisualGuide: React.FC<ExerciseVisualGuideProps> = ({ exerci
   const [tempoPhase, setTempoPhase] = useState<'lift' | 'squeeze' | 'lower'>('lift');
   const [phaseTimeLeft, setPhaseTimeLeft] = useState<number>(1);
   const [demoRep, setDemoRep] = useState<number>(1);
+  const [sectionTab, setSectionTab] = useState<'all' | 'technique' | 'breathing' | 'mistakes'>('all');
 
   useEffect(() => {
     if (!isMetronomeActive) {
@@ -756,17 +757,43 @@ export const ExerciseVisualGuide: React.FC<ExerciseVisualGuideProps> = ({ exerci
           </div>
         )}
 
+        {/* Quick Segmented Section Tabs */}
+        <div className="flex items-center gap-1 p-1 mb-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] overflow-x-auto select-none">
+          {[
+            { id: 'all', label: 'All Overview' },
+            { id: 'technique', label: 'Stance & Execution' },
+            { id: 'breathing', label: 'Breathing' },
+            { id: 'mistakes', label: 'Mistakes to Avoid' }
+          ].map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                sounds.playClick();
+                setSectionTab(t.id as any);
+              }}
+              className={`px-3 py-1 rounded-lg font-bold transition-all whitespace-nowrap active:scale-[0.98] ${
+                sectionTab === t.id
+                  ? 'bg-cyan-500 text-slate-950 shadow-sm shadow-cyan-500/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         {/* Form Guide Details */}
         <div className="space-y-3 text-xs">
           {/* Summary / Core Philosophy */}
-          {guide?.summary && (
+          {guide?.summary && (sectionTab === 'all' || sectionTab === 'technique') && (
             <p className="text-slate-300 italic bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[11px]">
               "{guide.summary}"
             </p>
           )}
 
           {/* 💡 BEGINNER PRO TIP & EASIER VARIATION */}
-          {guide?.beginnerTip && (
+          {guide?.beginnerTip && (sectionTab === 'all' || sectionTab === 'technique') && (
             <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-200 text-[11px] space-y-1">
               <div className="flex items-center gap-1.5 font-black text-amber-300 uppercase tracking-wide text-[10px]">
                 <Lightbulb className="w-3.5 h-3.5 text-amber-400" /> Beginner Pro Tip & Easier Variation
@@ -776,73 +803,79 @@ export const ExerciseVisualGuide: React.FC<ExerciseVisualGuideProps> = ({ exerci
           )}
 
           {/* Setup & Execution Step-by-Step */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Setup */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-              <h4 className="font-bold text-cyan-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                <CheckCircle className="w-3.5 h-3.5" /> 1. Stance & Setup
-              </h4>
-              <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
-                {guide?.setup ? (
-                  guide.setup.map((s, idx) => <li key={idx}>{s}</li>)
-                ) : (
-                  <>
-                    <li>Stand tall, feet shoulder-width apart</li>
-                    <li>Brace your core muscles tight</li>
-                    <li>Keep neck neutral, eyes looking forward</li>
-                  </>
-                )}
-              </ul>
-            </div>
+          {(sectionTab === 'all' || sectionTab === 'technique') && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Setup */}
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <h4 className="font-bold text-cyan-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                  <CheckCircle className="w-3.5 h-3.5" /> 1. Stance & Setup
+                </h4>
+                <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
+                  {guide?.setup ? (
+                    guide.setup.map((s, idx) => <li key={idx}>{s}</li>)
+                  ) : (
+                    <>
+                      <li>Stand tall, feet shoulder-width apart</li>
+                      <li>Brace your core muscles tight</li>
+                      <li>Keep neck neutral, eyes looking forward</li>
+                    </>
+                  )}
+                </ul>
+              </div>
 
-            {/* Execution */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-              <h4 className="font-bold text-orange-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" /> 2. Movement & Tempo
-              </h4>
-              <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
-                {guide?.execution ? (
-                  guide.execution.map((ex, idx) => <li key={idx}>{ex}</li>)
-                ) : (
-                  <>
-                    <li>1 second explosive lift/push</li>
-                    <li>1 second hard squeeze at top</li>
-                    <li>3 full seconds controlled lowering</li>
-                  </>
-                )}
-              </ul>
+              {/* Execution */}
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <h4 className="font-bold text-orange-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" /> 2. Movement & Tempo
+                </h4>
+                <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
+                  {guide?.execution ? (
+                    guide.execution.map((ex, idx) => <li key={idx}>{ex}</li>)
+                  ) : (
+                    <>
+                      <li>1 second explosive lift/push</li>
+                      <li>1 second hard squeeze at top</li>
+                      <li>3 full seconds controlled lowering</li>
+                    </>
+                  )}
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Breathing Technique */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-cyan-500/20 flex items-center gap-2.5 text-[11px] text-cyan-300">
-            <Wind className="w-4 h-4 text-cyan-400 shrink-0" />
-            <div>
-              <span className="font-bold text-white">Breathing Rule: </span>
-              {guide?.breathing || 'Exhale forcefully as you lift/push against gravity; Inhale deeply as you lower.'}
+          {(sectionTab === 'all' || sectionTab === 'breathing') && (
+            <div className="p-3 rounded-xl bg-slate-950 border border-cyan-500/20 flex items-center gap-2.5 text-[11px] text-cyan-300">
+              <Wind className="w-4 h-4 text-cyan-400 shrink-0" />
+              <div>
+                <span className="font-bold text-white">Breathing Rule: </span>
+                {guide?.breathing || 'Exhale forcefully as you lift/push against gravity; Inhale deeply as you lower.'}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Common Mistakes To Avoid */}
-          <div className="p-3.5 rounded-xl bg-red-950/20 border border-red-500/30 space-y-1.5">
-            <h4 className="font-bold text-red-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
-              <AlertOctagon className="w-3.5 h-3.5" /> ⚠️ Common Mistakes to Avoid
-            </h4>
-            <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
-              {guide?.commonMistakes ? (
-                guide.commonMistakes.map((m, idx) => <li key={idx}>{m}</li>)
-              ) : (
-                <>
-                  <li>Swinging weights or using torso momentum</li>
-                  <li>Shrugging shoulders into the neck</li>
-                  <li>Rushing reps without feeling the target muscle</li>
-                </>
-              )}
-            </ul>
-          </div>
+          {(sectionTab === 'all' || sectionTab === 'mistakes') && (
+            <div className="p-3.5 rounded-xl bg-red-950/20 border border-red-500/30 space-y-1.5">
+              <h4 className="font-bold text-red-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                <AlertOctagon className="w-3.5 h-3.5" /> ⚠️ Common Mistakes to Avoid
+              </h4>
+              <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
+                {guide?.commonMistakes ? (
+                  guide.commonMistakes.map((m, idx) => <li key={idx}>{m}</li>)
+                ) : (
+                  <>
+                    <li>Swinging weights or using torso momentum</li>
+                    <li>Shrugging shoulders into the neck</li>
+                    <li>Rushing reps without feeling the target muscle</li>
+                  </>
+                )}
+              </ul>
+            </div>
+          )}
 
           {/* 📈 Progression Tip */}
-          {guide?.progressionTip && (
+          {guide?.progressionTip && (sectionTab === 'all' || sectionTab === 'technique') && (
             <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-400 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>

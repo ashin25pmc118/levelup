@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, Achievement, WeeklyReview, StatType } from '../../../types';
 import { StatRadar } from '../../common/StatRadar';
+import { ConsistencyHeatmap } from '../../common/ConsistencyHeatmap';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
 
@@ -182,6 +183,12 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
               })}
             </div>
           </div>
+
+          {/* 365-Day Annual Consistency Grid */}
+          <ConsistencyHeatmap
+            transactions={storage.getXPTransactions()}
+            currentStreak={profile.currentStreak}
+          />
         </div>
       )}
 
