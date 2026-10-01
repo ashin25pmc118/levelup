@@ -19,7 +19,12 @@ import {
   Grid,
   Watch,
   Trophy,
-  Compass
+  Compass,
+  Droplets,
+  Moon,
+  BatteryCharging,
+  Heart,
+  Wind
 } from 'lucide-react';
 import {
   UserProfile,
@@ -31,6 +36,7 @@ import {
 } from '../../../types';
 import { sounds } from '../../../services/soundEffects';
 import { storage } from '../../../services/storageService';
+import { GuidedBreathworkModal } from '../../common/GuidedBreathworkModal';
 
 interface DashboardViewProps {
   profile: UserProfile;
@@ -77,6 +83,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenSmartwatch
 }) => {
   const [xpAnimId, setXpAnimId] = useState<string | null>(null);
+  const [isBreathworkOpen, setIsBreathworkOpen] = useState(false);
 
   // Daily Reading Habit State
   const readingQuest = dailyQuests.find(q => q.id === 'dq_reading' || q.title.toLowerCase().includes('reading'));
@@ -121,6 +128,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
     setIsEditingBook(false);
   };
+
+  // Daily Hydration Habit State (3,000ml / 12 Glasses Target)
+  const [hydrationMl, setHydrationMl] = useState<number>(() => {
+    const saved = localStorage.getItem(`levelup_hydration_${todayKey}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const targetHydrationMl = 3000;
+  const hydrationProgress = Math.min(100, Math.round((hydrationMl / targetHydrationMl) * 100));
+
+  const handleAddWater = (deltaMl: number) => {
+    sounds.playClick();
+    const newMl = Math.max(0, hydrationMl + deltaMl);
+    setHydrationMl(newMl);
+    localStorage.setItem(`levelup_hydration_${todayKey}`, String(newMl));
+  };
+
+  // Morning Sleep & Daily Readiness State
+  const [sleepHours, setSleepHours] = useState<number>(() => {
+    const saved = localStorage.getItem(`levelup_sleep_hours_${todayKey}`);
+    return saved ? parseFloat(saved) : 7.5;
+  });
+  const [sleepQuality, setSleepQuality] = useState<'restful' | 'fair' | 'poor'>(() => {
+    const saved = localStorage.getItem(`levelup_sleep_quality_${todayKey}`);
+    return (saved as any) || 'restful';
+  });
+
+  const handleUpdateSleep = (hours: number, quality: 'restful' | 'fair' | 'poor') => {
+    sounds.playClick();
+    setSleepHours(hours);
+    setSleepQuality(quality);
+    localStorage.setItem(`levelup_sleep_hours_${todayKey}`, String(hours));
+    localStorage.setItem(`levelup_sleep_quality_${todayKey}`, quality);
+  };
+
+  const readinessScore = React.useMemo(() => {
+    let score = Math.round((sleepHours / 8) * 75);
+    if (sleepQuality === 'restful') score += 25;
+    else if (sleepQuality === 'fair') score += 15;
+    else score += 5;
+    return Math.min(100, Math.max(30, score));
+  }, [sleepHours, sleepQuality]);
 
   const completedQuestsCount = dailyQuests.filter(q => q.isCompleted).length;
   const totalQuestsCount = dailyQuests.length;
@@ -775,32 +823,190 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
           </div>
 
+          {/* Daily Hydration Tracker Card */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-500/30 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                <Droplets className="w-3.5 h-3.5" /> Daily Hydration Tracker
+              </span>
+              {hydrationMl >= targetHydrationMl ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1">
+                  <Check className="w-3 h-3" /> Target Met (+20 XP)
+                </span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 font-bold border border-cyan-500/30">
+                  Target: {targetHydrationMl} ml
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400 font-medium">Water Logged:</span>
+              <span className="font-extrabold text-white">
+                <span className="text-cyan-400">{hydrationMl}</span> / {targetHydrationMl} ml ({hydrationProgress}% )
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  hydrationMl >= targetHydrationMl ? 'bg-emerald-400' : 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                }`}
+                style={{ width: `${hydrationProgress}%` }}
+              />
+            </div>
+
+            {/* Quick 1-Tap Buttons */}
+            <div className="flex items-center justify-between gap-1.5 pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleAddWater(250)}
+                  className="px-2.5 py-1 rounded-lg bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all active:scale-95"
+                >
+                  +250ml Glass
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddWater(500)}
+                  className="px-2.5 py-1 rounded-lg bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all active:scale-95"
+                >
+                  +500ml Bottle
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleAddWater(-250)}
+                disabled={hydrationMl <= 0}
+                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-[10px] font-bold transition-colors disabled:opacity-30"
+              >
+                -250ml
+              </button>
+            </div>
+          </div>
+
+          {/* Morning Sleep & Recovery Readiness Card */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-purple-950/30 border border-purple-500/30 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                <BatteryCharging className="w-3.5 h-3.5" /> Recovery & Readiness
+              </span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                readinessScore >= 80
+                  ? 'bg-emerald-950 text-emerald-300 border-emerald-500/30'
+                  : readinessScore >= 60
+                  ? 'bg-cyan-950 text-cyan-300 border-cyan-500/30'
+                  : 'bg-amber-950 text-amber-300 border-amber-500/30'
+              }`}>
+                {readinessScore}% Energy
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400 font-medium">Last Night's Sleep:</span>
+              <span className="font-extrabold text-white">
+                <span className="text-purple-300">{sleepHours}h</span> ({sleepQuality})
+              </span>
+            </div>
+
+            {/* Quick Sleep Hours Selector */}
+            <div className="grid grid-cols-4 gap-1">
+              {[6, 7, 7.5, 8.5].map(hrs => (
+                <button
+                  key={hrs}
+                  type="button"
+                  onClick={() => handleUpdateSleep(hrs, sleepQuality)}
+                  className={`py-1 rounded-lg text-xs font-bold border transition-all ${
+                    sleepHours === hrs
+                      ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  {hrs}h
+                </button>
+              ))}
+            </div>
+
+            {/* Sleep Quality Toggle */}
+            <div className="flex items-center gap-1">
+              {[
+                { id: 'restful', label: 'Restful ⚡' },
+                { id: 'fair', label: 'Fair 🌤️' },
+                { id: 'poor', label: 'Fatigued 😴' }
+              ].map(q => (
+                <button
+                  key={q.id}
+                  type="button"
+                  onClick={() => handleUpdateSleep(sleepHours, q.id as any)}
+                  className={`flex-1 py-1 rounded-lg text-[10px] font-bold border transition-all ${
+                    sleepQuality === q.id
+                      ? 'bg-purple-500 text-white border-purple-400'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Adaptive Training Advice */}
+            <p className="text-[11px] text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+              {readinessScore >= 80
+                ? '🔥 Prime Energy: High neural & physical drive. Great day for heavy calisthenics PRs or deep exam study.'
+                : readinessScore >= 60
+                ? '⚡ Moderate Energy: Solid baseline. Follow standard routine pacing and stay hydrated.'
+                : '🛡️ Recovery Day: Moderate fatigue detected. Focus on light bodyweight mobility, hydration, and an early sleep tonight.'}
+            </p>
+          </div>
+
           {/* Quick Action Matrix */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <button
               onClick={() => onNavigate('train')}
-              className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/80 transition-all text-left group"
+              className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
             >
-              <div className="p-2 rounded-xl bg-orange-950/50 text-orange-400 border border-orange-500/30 w-fit mb-2 group-hover:scale-110 transition-transform">
-                <Dumbbell className="w-4 h-4" />
+              <div className="p-1.5 rounded-xl bg-orange-950/50 text-orange-400 border border-orange-500/30 w-fit mb-1.5 group-hover:scale-110 transition-transform">
+                <Dumbbell className="w-3.5 h-3.5" />
               </div>
               <h5 className="text-xs font-bold text-white">Log Workout</h5>
-              <p className="text-[10px] text-slate-400 mt-0.5">Push-ups, Squats, Cardio</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Calisthenics & Cardio</p>
             </button>
 
             <button
               onClick={() => onNavigate('focus')}
-              className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all text-left group"
+              className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
             >
-              <div className="p-2 rounded-xl bg-purple-950/50 text-purple-400 border border-purple-500/30 w-fit mb-2 group-hover:scale-110 transition-transform">
-                <Brain className="w-4 h-4" />
+              <div className="p-1.5 rounded-xl bg-purple-950/50 text-purple-400 border border-purple-500/30 w-fit mb-1.5 group-hover:scale-110 transition-transform">
+                <Brain className="w-3.5 h-3.5" />
               </div>
               <h5 className="text-xs font-bold text-white">Start Focus</h5>
-              <p className="text-[10px] text-slate-400 mt-0.5">Pomodoro & Deep Work</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Pomodoro & Soundscape</p>
+            </button>
+
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setIsBreathworkOpen(true);
+              }}
+              className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
+            >
+              <div className="p-1.5 rounded-xl bg-cyan-950/50 text-cyan-400 border border-cyan-500/30 w-fit mb-1.5 group-hover:scale-110 transition-transform">
+                <Wind className="w-3.5 h-3.5" />
+              </div>
+              <h5 className="text-xs font-bold text-white">Breathwork</h5>
+              <p className="text-[10px] text-slate-400 mt-0.5">Box 4-4-4-4 Reset</p>
             </button>
           </div>
         </div>
       </div>
+
+      {/* Guided Breathwork Modal */}
+      <GuidedBreathworkModal
+        isOpen={isBreathworkOpen}
+        onClose={() => setIsBreathworkOpen(false)}
+      />
     </div>
   );
 };

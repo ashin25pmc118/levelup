@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { storage } from './services/storageService';
 import { sounds } from './services/soundEffects';
 import { processXPGain, checkAchievements } from './services/rpgEngine';
@@ -28,26 +28,31 @@ import { MoreMenuModal } from './components/layout/MoreMenuModal';
 
 // Modals & Boundaries
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { LevelUpModal } from './components/common/LevelUpModal';
-import { QuickNoteModal } from './components/common/QuickNoteModal';
-import { PlayerStatusCardModal } from './components/common/PlayerStatusCardModal';
-import { SmartwatchSyncModal } from './components/common/SmartwatchSyncModal';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
-import { OnboardingWizard } from './components/modules/onboarding/OnboardingWizard';
+import { ModuleLoadingFallback } from './components/common/ModuleLoadingFallback';
 
-// Modules
+// Primary Landing Modules (Eager loaded for instant first paint)
 import { DashboardView } from './components/modules/dashboard/DashboardView';
 import { TimetableModule } from './components/modules/timetable/TimetableModule';
 import { TrainModule } from './components/modules/train/TrainModule';
-import { FocusModule } from './components/modules/focus/FocusModule';
-import { QuestsModule } from './components/modules/quests/QuestsModule';
-import { ConfidenceModule } from './components/modules/confidence/ConfidenceModule';
-import { SkillsModule } from './components/modules/skills/SkillsModule';
-import { NotesModule } from './components/modules/notes/NotesModule';
-import { RemindersModule } from './components/modules/reminders/RemindersModule';
-import { ProgressView } from './components/modules/progress/ProgressView';
-import { CalendarView } from './components/modules/calendar/CalendarView';
-import { SettingsView } from './components/modules/settings/SettingsView';
+
+// Secondary Modules (Code-split via React.lazy for instant mobile loading)
+const FocusModule = lazy(() => import('./components/modules/focus/FocusModule').then(m => ({ default: m.FocusModule })));
+const QuestsModule = lazy(() => import('./components/modules/quests/QuestsModule').then(m => ({ default: m.QuestsModule })));
+const ConfidenceModule = lazy(() => import('./components/modules/confidence/ConfidenceModule').then(m => ({ default: m.ConfidenceModule })));
+const SkillsModule = lazy(() => import('./components/modules/skills/SkillsModule').then(m => ({ default: m.SkillsModule })));
+const NotesModule = lazy(() => import('./components/modules/notes/NotesModule').then(m => ({ default: m.NotesModule })));
+const RemindersModule = lazy(() => import('./components/modules/reminders/RemindersModule').then(m => ({ default: m.RemindersModule })));
+const ProgressView = lazy(() => import('./components/modules/progress/ProgressView').then(m => ({ default: m.ProgressView })));
+const CalendarView = lazy(() => import('./components/modules/calendar/CalendarView').then(m => ({ default: m.CalendarView })));
+const SettingsView = lazy(() => import('./components/modules/settings/SettingsView').then(m => ({ default: m.SettingsView })));
+
+// Lazy-loaded System Modals
+const SmartwatchSyncModal = lazy(() => import('./components/common/SmartwatchSyncModal').then(m => ({ default: m.SmartwatchSyncModal })));
+const PlayerStatusCardModal = lazy(() => import('./components/common/PlayerStatusCardModal').then(m => ({ default: m.PlayerStatusCardModal })));
+const QuickNoteModal = lazy(() => import('./components/common/QuickNoteModal').then(m => ({ default: m.QuickNoteModal })));
+const LevelUpModal = lazy(() => import('./components/common/LevelUpModal').then(m => ({ default: m.LevelUpModal })));
+const OnboardingWizard = lazy(() => import('./components/modules/onboarding/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 
 interface SystemToast {
   id: string;
@@ -265,6 +270,7 @@ export function App() {
         {/* Main Content Viewport */}
         <main className="flex-1 p-3.5 sm:p-6 lg:p-8 pb-28 md:pb-12 max-w-full overflow-y-auto">
           <ErrorBoundary>
+            <Suspense fallback={<ModuleLoadingFallback />}>
             {currentTab === 'today' && (
               <DashboardView
                 profile={profile}
@@ -411,6 +417,7 @@ export function App() {
               onReloadAllData={reloadAllData}
             />
           )}
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>
@@ -431,34 +438,54 @@ export function App() {
         onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
       />
 
-      {/* Noise Smartwatch & Health Sync Modal */}
-      <SmartwatchSyncModal
-        isOpen={isSmartwatchOpen}
-        onClose={() => setIsSmartwatchOpen(false)}
-        onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
-      />
+      {/* Lazy-loaded Modals */}
+      <Suspense fallback={null}>
+        {/* Noise Smartwatch & Health Sync Modal */}
+        {isSmartwatchOpen && (
+          <SmartwatchSyncModal
+            isOpen={isSmartwatchOpen}
+            onClose={() => setIsSmartwatchOpen(false)}
+            onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
+          />
+        )}
 
-      {/* Global Quick Note Modal */}
-      <QuickNoteModal
-        isOpen={isQuickNoteOpen}
-        onClose={() => setIsQuickNoteOpen(false)}
-        onSaved={reloadAllData}
-      />
+        {/* Global Quick Note Modal */}
+        {isQuickNoteOpen && (
+          <QuickNoteModal
+            isOpen={isQuickNoteOpen}
+            onClose={() => setIsQuickNoteOpen(false)}
+            onSaved={reloadAllData}
+          />
+        )}
 
-      {/* Celebratory Level Up Modal */}
-      {levelUpProfile && (
-        <LevelUpModal
-          profile={levelUpProfile}
-          onClose={() => setLevelUpProfile(null)}
-        />
-      )}
+        {/* Celebratory Level Up Modal */}
+        {levelUpProfile && (
+          <LevelUpModal
+            profile={levelUpProfile}
+            onClose={() => setLevelUpProfile(null)}
+          />
+        )}
 
-      {/* Hunter / Player Status Identity Modal */}
-      <PlayerStatusCardModal
-        profile={profile}
-        isOpen={isPlayerCardOpen}
-        onClose={() => setIsPlayerCardOpen(false)}
-      />
+        {/* Hunter / Player Status Identity Modal */}
+        {isPlayerCardOpen && (
+          <PlayerStatusCardModal
+            profile={profile}
+            isOpen={isPlayerCardOpen}
+            onClose={() => setIsPlayerCardOpen(false)}
+          />
+        )}
+
+        {/* First Launch Onboarding Wizard */}
+        {showOnboarding && (
+          <OnboardingWizard
+            onComplete={(p, s) => {
+              setProfile(p);
+              setSettings(s);
+              setShowOnboarding(false);
+            }}
+          />
+        )}
+      </Suspense>
 
       {/* PWA Mobile App Installation Prompt */}
       <PWAInstallPrompt />
@@ -492,17 +519,6 @@ export function App() {
           </div>
         ))}
       </div>
-
-      {/* First Launch Onboarding Wizard */}
-      {showOnboarding && (
-        <OnboardingWizard
-          onComplete={(p, s) => {
-            setProfile(p);
-            setSettings(s);
-            setShowOnboarding(false);
-          }}
-        />
-      )}
     </div>
   );
 }

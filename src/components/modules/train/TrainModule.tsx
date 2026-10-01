@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import {
   Dumbbell,
   HeartPulse,
@@ -51,17 +51,18 @@ import { generateWorkoutForDay } from '../../../services/fitness/workoutGenerato
 import { getExerciseById } from '../../../services/fitness/exerciseRegistry';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
-
-// Subcomponents
-import { ActiveWorkoutSession } from '../fitness/ActiveWorkoutSession';
-import { CalisthenicsSkillTree } from '../fitness/CalisthenicsSkillTree';
-import { ExerciseLibraryView } from '../fitness/ExerciseLibraryView';
-import { Roadmap12MonthView } from '../fitness/Roadmap12MonthView';
-import { FitnessBenchmarkTests } from '../fitness/FitnessBenchmarkTests';
+import { ModuleLoadingFallback } from '../../common/ModuleLoadingFallback';
 import { ExerciseVisualGuide } from '../../common/ExerciseVisualGuide';
-import { EyeCareTrainer } from './EyeCareTrainer';
-import { ReflexHub } from './ReflexHub';
 import { useDragScroll } from '../../../hooks/useDragScroll';
+
+// Lazy loaded subcomponents for on-demand performance
+const ActiveWorkoutSession = lazy(() => import('../fitness/ActiveWorkoutSession').then(m => ({ default: m.ActiveWorkoutSession })));
+const CalisthenicsSkillTree = lazy(() => import('../fitness/CalisthenicsSkillTree').then(m => ({ default: m.CalisthenicsSkillTree })));
+const ExerciseLibraryView = lazy(() => import('../fitness/ExerciseLibraryView').then(m => ({ default: m.ExerciseLibraryView })));
+const Roadmap12MonthView = lazy(() => import('../fitness/Roadmap12MonthView').then(m => ({ default: m.Roadmap12MonthView })));
+const FitnessBenchmarkTests = lazy(() => import('../fitness/FitnessBenchmarkTests').then(m => ({ default: m.FitnessBenchmarkTests })));
+const EyeCareTrainer = lazy(() => import('./EyeCareTrainer').then(m => ({ default: m.EyeCareTrainer })));
+const ReflexHub = lazy(() => import('./ReflexHub').then(m => ({ default: m.ReflexHub })));
 
 interface TrainModuleProps {
   exercises: Exercise[];
@@ -280,11 +281,13 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
     <div className="space-y-5 animate-in fade-in duration-300 pb-12">
       {/* Active Workout Session Fullscreen Overlay */}
       {activeWorkoutSession && (
-        <ActiveWorkoutSession
-          workout={activeWorkoutSession}
-          onClose={() => setActiveWorkoutSession(null)}
-          onFinishWorkout={handleFinishWorkout}
-        />
+        <Suspense fallback={<ModuleLoadingFallback message="Preparing Workout Session..." />}>
+          <ActiveWorkoutSession
+            workout={activeWorkoutSession}
+            onClose={() => setActiveWorkoutSession(null)}
+            onFinishWorkout={handleFinishWorkout}
+          />
+        </Suspense>
       )}
 
       {/* Visual Form Demonstration Modal */}
@@ -717,32 +720,44 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
       {/* 2. CALISTHENICS SKILL TREE TAB */}
       {/* ======================================================== */}
       {activeTab === 'skills' && (
-        <CalisthenicsSkillTree
-          profile={fitnessProfile}
-          progressionStates={progressionStates}
-          onUpdateProfile={updated => setFitnessProfile(updated)}
-        />
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Calisthenics Skill Tree..." />}>
+          <CalisthenicsSkillTree
+            profile={fitnessProfile}
+            progressionStates={progressionStates}
+            onUpdateProfile={updated => setFitnessProfile(updated)}
+          />
+        </Suspense>
       )}
 
       {/* ======================================================== */}
       {/* 3. EXERCISE LIBRARY TAB */}
       {/* ======================================================== */}
-      {activeTab === 'library' && <ExerciseLibraryView />}
+      {activeTab === 'library' && (
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Exercise Library..." />}>
+          <ExerciseLibraryView />
+        </Suspense>
+      )}
 
       {/* ======================================================== */}
       {/* 4. 12-MONTH ROADMAP TAB */}
       {/* ======================================================== */}
       {activeTab === 'roadmap' && (
-        <Roadmap12MonthView
-          profile={fitnessProfile}
-          onUpdateProfile={updated => setFitnessProfile(updated)}
-        />
+        <Suspense fallback={<ModuleLoadingFallback message="Loading 12-Month Periodization Roadmap..." />}>
+          <Roadmap12MonthView
+            profile={fitnessProfile}
+            onUpdateProfile={updated => setFitnessProfile(updated)}
+          />
+        </Suspense>
       )}
 
       {/* ======================================================== */}
       {/* 5. PR BENCHMARKS TAB */}
       {/* ======================================================== */}
-      {activeTab === 'benchmarks' && <FitnessBenchmarkTests />}
+      {activeTab === 'benchmarks' && (
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Benchmark Tests..." />}>
+          <FitnessBenchmarkTests />
+        </Suspense>
+      )}
 
       {/* ======================================================== */}
       {/* 6. CLASSIC QUICK LOGGING & CARDIO TAB */}
@@ -845,14 +860,18 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
       {/* 7. EYE-CARE TAB */}
       {/* ======================================================== */}
       {activeTab === 'eyecare' && (
-        <EyeCareTrainer onAwardXP={onAwardXP} />
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Schulte Table & Eye Drills..." />}>
+          <EyeCareTrainer onAwardXP={onAwardXP} />
+        </Suspense>
       )}
 
       {/* ======================================================== */}
       {/* 8. REFLEX TEST TAB */}
       {/* ======================================================== */}
       {activeTab === 'reflex' && (
-        <ReflexHub highScores={reflexScores} onSaveHighScore={handleSaveReflexScore} onAwardXP={onAwardXP} />
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Millisecond Reaction Tester..." />}>
+          <ReflexHub highScores={reflexScores} onSaveHighScore={handleSaveReflexScore} onAwardXP={onAwardXP} />
+        </Suspense>
       )}
     </div>
   );

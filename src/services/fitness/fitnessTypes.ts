@@ -145,6 +145,9 @@ export interface CompletedWorkoutSession {
   overallRpe: PerceivedDifficulty;
   totalXpEarned: number;
   progressiveOverloadUnlocked: string[]; // Names of exercises that progressed
+  avgHeartRate?: number | null;
+  peakHeartRate?: number | null;
+  recoveryRateBpm?: number | null;
 }
 
 // User Fitness State & Progression

@@ -96,13 +96,41 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
   const [isWorkoutCompleted, setIsWorkoutCompleted] = useState(false);
   const [finalWorkoutSummary, setFinalWorkoutSummary] = useState<CompletedWorkoutSession | null>(null);
 
-  // Smartwatch State
+  // Smartwatch & Biometric State
   const [swState, setSwState] = useState(smartwatch.state);
+  const hrReadingsRef = useRef<number[]>([]);
+  const restStartHrRef = useRef<number | null>(null);
+  const [hrRecovered, setHrRecovered] = useState<boolean>(false);
+  const [recoveredBpm, setRecoveredBpm] = useState<number | null>(null);
+  const [smartRestAutoregulated, setSmartRestAutoregulated] = useState<boolean>(true);
+  const lastRecoveryDropRef = useRef<number | null>(null);
+
   useEffect(() => {
     smartwatch.setStatusListener(st => {
       setSwState({ ...st });
     });
-  }, []);
+    smartwatch.setHeartRateListener(bpm => {
+      if (bpm > 35 && bpm < 230) {
+        hrReadingsRef.current.push(bpm);
+
+        // Autoregulated rest recovery check: HR dropped below 118 BPM
+        if (isResting && smartRestAutoregulated && !hrRecovered) {
+          if (bpm <= 118) {
+            setHrRecovered(true);
+            setRecoveredBpm(bpm);
+            if (restStartHrRef.current && restStartHrRef.current > bpm) {
+              lastRecoveryDropRef.current = restStartHrRef.current - bpm;
+            }
+            sounds.playTimerDone();
+            haptics.success();
+          }
+        }
+      }
+    });
+    return () => {
+      smartwatch.setHeartRateListener(null);
+    };
+  }, [isResting, smartRestAutoregulated, hrRecovered]);
 
   // Reset inputs when exercise changes
   useEffect(() => {
@@ -257,8 +285,13 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
     } else {
       // Advance to next set & start rest timer
       setCurrentSetNumber(s => s + 1);
-      setRestSecondsLeft(currentItem.exercise.restSeconds || 60);
+      const restSec = currentItem.exercise.restSeconds || 60;
+      setRestSecondsLeft(restSec);
+      restEndTimeRef.current = Date.now() + restSec * 1000;
       setIsResting(true);
+      setHrRecovered(false);
+      setRecoveredBpm(null);
+      restStartHrRef.current = swState.heartRate;
       // Reset hold timer for next set if timed
       if (isTimed) {
         setHoldSecondsLeft(currentItem.exercise.targetDurationSeconds || 30);
@@ -357,6 +390,10 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
     const totalMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
     const totalXp = completedExercisesResults.reduce((acc, r) => acc + 30, 50);
 
+    const readings = hrReadingsRef.current;
+    const avgHr = readings.length > 0 ? Math.round(readings.reduce((a, b) => a + b, 0) / readings.length) : (swState.heartRate || null);
+    const peakHr = readings.length > 0 ? Math.max(...readings) : (swState.heartRate || null);
+
     const completedSession: CompletedWorkoutSession = {
       id: `session_${Date.now()}`,
       workoutId: workout.id,
@@ -369,7 +406,10 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
       exercises: completedExercisesResults,
       overallRpe: selectedDifficulty,
       totalXpEarned: totalXp,
-      progressiveOverloadUnlocked: []
+      progressiveOverloadUnlocked: [],
+      avgHeartRate: avgHr,
+      peakHeartRate: peakHr,
+      recoveryRateBpm: lastRecoveryDropRef.current
     };
 
     // Save session in storage & award XP to user profile
@@ -421,6 +461,25 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
               <span className="text-xl font-extrabold text-amber-400">+{finalWorkoutSummary.totalXpEarned}</span>
             </div>
           </div>
+
+          {/* Biometrics Card */}
+          {finalWorkoutSummary.avgHeartRate && (
+            <div className="p-3.5 rounded-2xl bg-rose-950/30 border border-rose-500/30 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-rose-400 fill-rose-400 animate-pulse" />
+                <span className="font-bold text-slate-200">Smartwatch Biometrics:</span>
+              </div>
+              <div className="flex items-center gap-3 font-mono font-bold">
+                <span className="text-slate-300">Avg: <strong className="text-rose-400">{finalWorkoutSummary.avgHeartRate} BPM</strong></span>
+                {finalWorkoutSummary.peakHeartRate && (
+                  <span className="text-slate-300">Peak: <strong className="text-amber-400">{finalWorkoutSummary.peakHeartRate} BPM</strong></span>
+                )}
+                {finalWorkoutSummary.recoveryRateBpm && (
+                  <span className="text-slate-300">Recovery: <strong className="text-emerald-400">-{finalWorkoutSummary.recoveryRateBpm} BPM</strong></span>
+                )}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => onFinishWorkout(finalWorkoutSummary)}
@@ -749,48 +808,119 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
           </div>
         </div>
 
-        {/* REST TIMER CARD (Displays between sets) */}
+        {/* REST TIMER CARD (Displays between sets with Smartwatch Autoregulation) */}
         {isResting && (
-          <div className="p-5 rounded-3xl bg-slate-900 border border-amber-500/40 shadow-xl space-y-3 animate-in zoom-in-95">
+          <div className={`p-5 sm:p-6 rounded-3xl border shadow-2xl space-y-4 animate-in zoom-in-95 transition-all ${
+            hrRecovered
+              ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/60 border-emerald-500/60 shadow-emerald-500/10'
+              : swState.connected && swState.heartRate && swState.heartRate > 140
+              ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/60 border-amber-500/60 shadow-amber-500/10'
+              : 'bg-slate-900 border-cyan-500/40 shadow-cyan-950/20'
+          }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-amber-400 animate-ping" />
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Recovery Rest Interval</span>
+                <div className={`w-3 h-3 rounded-full animate-ping ${
+                  hrRecovered ? 'bg-emerald-400' : 'bg-cyan-400'
+                }`} />
+                <span className="text-xs font-black uppercase tracking-wider text-white">
+                  {hrRecovered ? 'Autoregulated Recovery Reached' : 'Rest & Recovery Interval'}
+                </span>
               </div>
-              <span className="font-mono text-xl font-black text-amber-300">{restSecondsLeft}s</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-bold uppercase">Time Left:</span>
+                <span className="font-mono text-2xl font-black text-cyan-300">{restSecondsLeft}s</span>
+              </div>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Coaching Tip: Take deep diaphragmatic breaths through your nose. Shake out tension in forearms and shoulders.
-            </p>
+            {/* Smartwatch Biometric Feedback Badge */}
+            {swState.connected && swState.heartRate ? (
+              <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                hrRecovered
+                  ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
+                  : swState.heartRate > 140
+                  ? 'bg-amber-950/40 border-amber-500/50 text-amber-200'
+                  : 'bg-cyan-950/40 border-cyan-500/40 text-cyan-200'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    hrRecovered ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                  }`}>
+                    <Heart className="w-5 h-5 fill-current animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black tracking-wider uppercase">
+                        {hrRecovered
+                          ? 'Heart Rate Recovered'
+                          : swState.heartRate > 140
+                          ? 'Cardiovascular Fatigue High'
+                          : 'Monitoring Recovery'}
+                      </span>
+                      <span className="font-mono text-xs px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 font-bold">
+                        {swState.heartRate} BPM
+                      </span>
+                    </div>
+                    <p className="text-[11px] opacity-90 mt-0.5 leading-snug">
+                      {hrRecovered
+                        ? `Dropped to safe training threshold (< 120 BPM). Phosphocreatine restored!`
+                        : swState.heartRate > 140
+                        ? 'High cardiac intensity. Take slow diaphragmatic breaths before lifting.'
+                        : 'Deep nasal breathing lowers your pulse. Target: < 120 BPM.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs">
+                <span className="text-slate-400">
+                  Tip: Nasal 4s inhale, 6s exhale resets your nervous system.
+                </span>
+                <button
+                  onClick={() => smartwatch.connect()}
+                  className="px-2.5 py-1 rounded-xl bg-cyan-950 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900 text-[10px] font-bold shrink-0 transition-colors"
+                >
+                  Pair Watch
+                </button>
+              </div>
+            )}
 
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setRestSecondsLeft(s => s + 15);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300"
-              >
-                +15s
-              </button>
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setRestSecondsLeft(s => Math.max(0, s - 15));
-                }}
-                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300"
-              >
-                -15s
-              </button>
+            {/* Rest adjustments & Start Next Set button */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setRestSecondsLeft(s => s + 15);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 active:scale-95"
+                >
+                  +15s
+                </button>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setRestSecondsLeft(s => Math.max(0, s - 15));
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 active:scale-95"
+                >
+                  -15s
+                </button>
+              </div>
+
               <button
                 onClick={() => {
                   sounds.playClick();
                   setIsResting(false);
                 }}
-                className="ml-auto px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+                className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg active:scale-95 ${
+                  hrRecovered
+                    ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 shadow-emerald-500/25 ring-2 ring-emerald-300 animate-pulse'
+                    : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-500/20'
+                }`}
               >
-                Skip Rest & Start Next Set
+                {hrRecovered
+                  ? `Ready for Set ${currentSetNumber} • Start Now`
+                  : `Skip Rest & Start Set ${currentSetNumber}`}
               </button>
             </div>
           </div>
