@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Flame,
@@ -44,6 +44,27 @@ interface DashboardViewProps {
   settings: AppSettings;
   onOpenSmartwatch?: () => void;
 }
+
+const toSeconds = (timeStr: string): number => {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  return (h || 0) * 3600 + (m || 0) * 60;
+};
+
+// Format remaining seconds into precise countdown (e.g. "4 min 10sec left")
+const formatPreciseCountdown = (totalSeconds: number, suffix: string = ' left'): string => {
+  if (totalSeconds <= 0) return `0sec${suffix}`;
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${mins} min ${secs}sec${suffix}`;
+  }
+  if (mins > 0) {
+    return `${mins} min ${secs}sec${suffix}`;
+  }
+  return `${secs}sec${suffix}`;
+};
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   profile,
@@ -105,15 +126,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const totalQuestsCount = dailyQuests.length;
   const questPercent = totalQuestsCount > 0 ? Math.round((completedQuestsCount / totalQuestsCount) * 100) : 0;
 
-  // Determine "What should I do now?"
-  const now = new Date();
+  // Real-time device clock (ticking every 1s for live countdowns e.g. "4 min 10sec left")
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const currentHour = now.getHours();
   const currentMin = now.getMinutes();
+  const currentSec = now.getSeconds();
+  const nowTotalSeconds = currentHour * 3600 + currentMin * 60 + currentSec;
   const currentTimeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
 
-  // Find active or upcoming timetable event
-  const currentEvent = todayEvents.find(e => e.startTime <= currentTimeStr && e.endTime >= currentTimeStr);
-  const nextEvent = todayEvents.find(e => e.startTime > currentTimeStr);
+  // Find active or upcoming timetable event (second-accurate)
+  const currentEvent = todayEvents.find(e => {
+    const startSec = toSeconds(e.startTime);
+    let endSec = toSeconds(e.endTime);
+    if (endSec < startSec) endSec += 86400; // handle crossover past midnight
+    let cur = nowTotalSeconds;
+    if (endSec > 86400 && cur < startSec) cur += 86400;
+    return startSec <= cur && cur < endSec;
+  });
+  const nextEvent = todayEvents.find(e => toSeconds(e.startTime) > nowTotalSeconds && !e.isCompleted);
 
   // 🚀 Progressive Disclosure: Compute context-aware single "Next Action"
   const primaryNextAction = React.useMemo(() => {
@@ -344,14 +382,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="mt-1 space-y-2">
                 <div>
                   <h4 className="text-sm font-bold text-white line-clamp-1">{currentEvent.title}</h4>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center justify-between">
+                  <p className="text-xs text-slate-400 mt-0.5 flex items-center justify-between gap-2 flex-wrap">
                     <span>{currentEvent.startTime} - {currentEvent.endTime}</span>
                     {(() => {
-                      const [eh, em] = currentEvent.endTime.split(':').map(Number);
-                      const rem = Math.max(0, (eh * 60 + em) - (currentHour * 60 + currentMin));
+                      const startSec = toSeconds(currentEvent.startTime);
+                      let endSec = toSeconds(currentEvent.endTime);
+                      if (endSec < startSec) endSec += 86400;
+                      let cur = nowTotalSeconds;
+                      if (endSec > 86400 && cur < startSec) cur += 86400;
+                      const remSec = Math.max(0, endSec - cur);
                       return (
-                        <span className="text-cyan-300 font-bold font-mono">
-                          {rem > 0 ? `⏳ ${rem}m left` : 'Ending soon'}
+                        <span className="text-cyan-300 font-bold font-mono text-[11px] sm:text-xs">
+                          {remSec > 0 ? `⏳ ${formatPreciseCountdown(remSec)}` : 'Ending soon'}
                         </span>
                       );
                     })()}
@@ -360,11 +402,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                 {/* Progress bar of current block */}
                 {(() => {
-                  const [sh, sm] = currentEvent.startTime.split(':').map(Number);
-                  const [eh, em] = currentEvent.endTime.split(':').map(Number);
-                  const total = (eh * 60 + em) - (sh * 60 + sm);
-                  const elapsed = (currentHour * 60 + currentMin) - (sh * 60 + sm);
-                  const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((elapsed / total) * 100))) : 50;
+                  const startSec = toSeconds(currentEvent.startTime);
+                  let endSec = toSeconds(currentEvent.endTime);
+                  if (endSec < startSec) endSec += 86400;
+                  let cur = nowTotalSeconds;
+                  if (endSec > 86400 && cur < startSec) cur += 86400;
+                  const total = Math.max(1, endSec - startSec);
+                  const elapsed = Math.max(0, cur - startSec);
+                  const pct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
                   return (
                     <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                       <div className="h-full bg-cyan-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
@@ -428,8 +473,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {nextEvent ? (
               <div className="mt-1">
                 <h4 className="text-sm font-bold text-white line-clamp-1">{nextEvent.title}</h4>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Starts at {nextEvent.startTime} ({nextEvent.startTime} - {nextEvent.endTime})
+                <p className="text-xs text-slate-400 mt-0.5 flex items-center justify-between gap-2 flex-wrap">
+                  <span>Starts at {nextEvent.startTime}</span>
+                  <span className="text-purple-300 font-bold font-mono text-[11px] sm:text-xs">
+                    in {formatPreciseCountdown(Math.max(0, toSeconds(nextEvent.startTime) - nowTotalSeconds), '')}
+                  </span>
                 </p>
               </div>
             ) : (
