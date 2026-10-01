@@ -309,7 +309,7 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
           { id: 'roadmap', label: '12-Month Periodization', icon: Calendar, color: 'text-emerald-400' },
           { id: 'benchmarks', label: 'PR Benchmarks', icon: Award, color: 'text-pink-400' },
           { id: 'classic', label: 'Quick Log & Cardio', icon: Flame, color: 'text-orange-400' },
-          { id: 'eyecare', label: 'Eye-Care', icon: Eye, color: 'text-blue-400' },
+          { id: 'eyecare', label: 'Eye-Care & Schulte Table', icon: Eye, color: 'text-blue-400' },
           { id: 'reflex', label: 'Reflex Test', icon: Activity, color: 'text-green-400' }
         ].map(tab => {
           const Icon = tab.icon;

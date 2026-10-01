@@ -9,16 +9,142 @@ import {
   Info,
   Target,
   Clock,
-  Zap
+  Zap,
+  Grid,
+  Shuffle,
+  Trophy,
+  CheckCircle2,
+  RefreshCw,
+  HelpCircle,
+  AlertTriangle
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { sounds } from '../../../services/soundEffects';
 
 interface EyeCareTrainerProps {
   onAwardXP: (amount: number, description: string, stat: 'awareness' | 'recovery' | 'reflex') => void;
 }
 
+// Fisher-Yates shuffle algorithm to generate a brand new randomized pattern every round
+function generateSchulteGrid(size: number): number[] {
+  const total = size * size;
+  const arr = Array.from({ length: total }, (_, i) => i + 1);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => {
-  const [subTab, setSubTab] = useState<'saccades' | 'nearfar' | 'break20' | 'palming' | 'science'>('saccades');
+  const [subTab, setSubTab] = useState<'schulte' | 'saccades' | 'nearfar' | 'break20' | 'palming' | 'science'>('schulte');
+
+  // ==========================================
+  // 0. SCHULTE TABLE: PERIPHERAL VISION & SPEED
+  // ==========================================
+  const [schulteSize, setSchulteSize] = useState<3 | 4 | 5>(5);
+  const [schulteNumbers, setSchulteNumbers] = useState<number[]>(() => generateSchulteGrid(5));
+  const [schulteTarget, setSchulteTarget] = useState<number>(1);
+  const [schulteIsRunning, setSchulteIsRunning] = useState<boolean>(false);
+  const [schulteElapsedMs, setSchulteElapsedMs] = useState<number>(0);
+  const [schulteCompleted, setSchulteCompleted] = useState<boolean>(false);
+  const [schulteChaosMode, setSchulteChaosMode] = useState<boolean>(false);
+  const [schulteErrorNum, setSchulteErrorNum] = useState<number | null>(null);
+  const [schulteRound, setSchulteRound] = useState<number>(1);
+  const schulteTimerRef = useRef<any | null>(null);
+  const schulteStartRef = useRef<number>(0);
+
+  const [schulteRecords, setSchulteRecords] = useState<Record<number, number>>(() => {
+    try {
+      const saved = localStorage.getItem('levelup_schulte_records');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const totalSchulteCells = schulteSize * schulteSize;
+
+  const resetSchulte = (newSize?: 3 | 4 | 5, incrementRound: boolean = true) => {
+    const size = newSize ?? schulteSize;
+    if (schulteTimerRef.current) clearInterval(schulteTimerRef.current);
+    setSchulteSize(size);
+    setSchulteNumbers(generateSchulteGrid(size));
+    setSchulteTarget(1);
+    setSchulteIsRunning(false);
+    setSchulteElapsedMs(0);
+    setSchulteCompleted(false);
+    setSchulteErrorNum(null);
+    if (incrementRound) {
+      setSchulteRound(r => r + 1);
+    }
+  };
+
+  const handleSchulteClick = (num: number) => {
+    if (schulteCompleted) return;
+
+    // Start timer on first tap
+    if (!schulteIsRunning) {
+      schulteStartRef.current = Date.now() - schulteElapsedMs;
+      setSchulteIsRunning(true);
+      schulteTimerRef.current = setInterval(() => {
+        setSchulteElapsedMs(Date.now() - schulteStartRef.current);
+      }, 30);
+    }
+
+    if (num === schulteTarget) {
+      sounds.playClick();
+      setSchulteErrorNum(null);
+
+      if (num === totalSchulteCells) {
+        // Complete the table!
+        if (schulteTimerRef.current) clearInterval(schulteTimerRef.current);
+        const finalMs = Date.now() - schulteStartRef.current;
+        setSchulteElapsedMs(finalMs);
+        setSchulteIsRunning(false);
+        setSchulteCompleted(true);
+        sounds.playQuestComplete();
+        confetti({ particleCount: 75, spread: 70, origin: { y: 0.6 } });
+
+        // Save PR
+        const prev = schulteRecords[schulteSize];
+        if (!prev || finalMs < prev) {
+          const updated = { ...schulteRecords, [schulteSize]: finalMs };
+          setSchulteRecords(updated);
+          localStorage.setItem('levelup_schulte_records', JSON.stringify(updated));
+        }
+
+        const sec = (finalMs / 1000).toFixed(2);
+        onAwardXP(25, `Schulte Table ${schulteSize}x${schulteSize} completed in ${sec}s`, 'awareness');
+      } else {
+        const next = schulteTarget + 1;
+        setSchulteTarget(next);
+
+        // Optional Chaos Shuffle Mode: shuffles remaining unclicked numbers!
+        if (schulteChaosMode) {
+          setSchulteNumbers(prev => {
+            const unclicked = prev.filter(n => n >= next);
+            for (let i = unclicked.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [unclicked[i], unclicked[j]] = [unclicked[j], unclicked[i]];
+            }
+            let idx = 0;
+            return prev.map(n => (n < next ? n : unclicked[idx++]));
+          });
+        }
+      }
+    } else if (num > schulteTarget) {
+      sounds.playReflexBeep(false);
+      setSchulteErrorNum(num);
+      setTimeout(() => setSchulteErrorNum(null), 350);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (schulteTimerRef.current) clearInterval(schulteTimerRef.current);
+    };
+  }, []);
 
   // ==========================================
   // 1. SACCADIC DYNAMIC VISION TRACKER (BADMINTON & COMBAT)
@@ -193,6 +319,7 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
       {/* Sub-navigation */}
       <div className="flex flex-wrap gap-1.5 p-1.5 rounded-xl bg-slate-950 border border-slate-800">
         {[
+          { id: 'schulte', label: '🔢 Schulte Table (Peripheral Speed)', icon: Grid },
           { id: 'saccades', label: '🏸 Dynamic Vision (Badminton/Combat)', icon: Zap },
           { id: 'nearfar', label: '🎯 Near-Far Focus Cycle', icon: Target },
           { id: 'break20', label: '⏱️ 20-20-20 Screen Break', icon: Clock },
@@ -218,6 +345,240 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
           );
         })}
       </div>
+
+      {/* 0. SCHULTE TABLE: PERIPHERAL VISION & SPEED */}
+      {subTab === 'schulte' && (
+        <div className="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1 rounded-md bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+                  <Grid className="w-4 h-4" />
+                </span>
+                <h3 className="text-lg font-black text-white">Schulte Table: Peripheral Vision & Speed</h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-950 text-purple-300 border border-purple-500/30">
+                  Round #{schulteRound}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Fix your gaze on the <strong>center dot</strong>. Locate numbers sequentially from <strong>1 to {totalSchulteCells}</strong> using only your <strong>peripheral vision</strong>.
+              </p>
+            </div>
+
+            {/* Quick Action: New Shuffled Grid */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                resetSchulte();
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto active:scale-95"
+              title="Generate a brand new random permutation"
+            >
+              <Shuffle className="w-3.5 h-3.5" />
+              <span>Shuffle New Pattern</span>
+            </button>
+          </div>
+
+          {/* SCIENTIFIC EXPLANATION BANNER */}
+          <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-xs text-slate-300 space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-cyan-300">
+              <HelpCircle className="w-4 h-4 shrink-0" />
+              <span>Why does the number pattern change every time?</span>
+            </div>
+            <p className="leading-relaxed text-slate-400 text-[11px]">
+              By Walter Schulte's scientific protocol, <strong>the numbers MUST randomize on every round</strong>. If the numbers stayed in fixed spots, your brain would use muscle memory rather than your visual field. A new randomized pattern every game forces your eyes to expand their peripheral field of view, eliminates subconscious eye-head turning, and speeds up mental processing!
+            </p>
+          </div>
+
+          {/* Controls Bar: Size Selector & Chaos Mode Toggle */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800">
+            {/* Grid Size Selection */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase text-slate-400">Grid Size:</span>
+              {[
+                { size: 3, label: '3×3 (1-9)' },
+                { size: 4, label: '4×4 (1-16)' },
+                { size: 5, label: '5×5 (1-25 Standard)' }
+              ].map(opt => (
+                <button
+                  key={opt.size}
+                  onClick={() => {
+                    sounds.playClick();
+                    resetSchulte(opt.size as 3 | 4 | 5);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                    schulteSize === opt.size
+                      ? 'bg-cyan-500 text-slate-950'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chaos Shuffle Toggle */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setSchulteChaosMode(!schulteChaosMode);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                  schulteChaosMode
+                    ? 'bg-amber-950/80 text-amber-300 border-amber-500/40'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-300'
+                }`}
+                title="When ON: remaining numbers re-shuffle dynamically after every correct click!"
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+                <span>Chaos Shuffle: {schulteChaosMode ? 'ON (After Each Tap)' : 'OFF (Classic Round)'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* HUD Status Bar: Next Target & Millisecond Stopwatch */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {/* Next Target */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Next Number</span>
+                <span className="text-xl font-black font-mono text-cyan-400">
+                  {schulteCompleted ? 'DONE!' : schulteTarget}
+                </span>
+              </div>
+              <div className="text-right text-[10px] text-slate-500 font-semibold">
+                of {totalSchulteCells}
+              </div>
+            </div>
+
+            {/* Stopwatch */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Time</span>
+                <span className="text-xl font-black font-mono text-white">
+                  {(schulteElapsedMs / 1000).toFixed(2)}s
+                </span>
+              </div>
+              <Clock className="w-4 h-4 text-cyan-400 animate-pulse" />
+            </div>
+
+            {/* Best Record */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Best PR ({schulteSize}×{schulteSize})</span>
+                <span className="text-xl font-black font-mono text-amber-300">
+                  {schulteRecords[schulteSize] ? `${(schulteRecords[schulteSize] / 1000).toFixed(2)}s` : '--'}
+                </span>
+              </div>
+              <Trophy className="w-4 h-4 text-amber-400" />
+            </div>
+
+            {/* Reset / Restart */}
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center">
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  resetSchulte(schulteSize, true);
+                }}
+                className="w-full h-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-700 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Restart Round</span>
+              </button>
+            </div>
+          </div>
+
+          {/* THE SCHULTE INTERACTIVE GRID */}
+          <div className="relative p-4 sm:p-6 rounded-2xl bg-slate-950 border-2 border-slate-800 shadow-2xl flex flex-col items-center justify-center min-h-[340px]">
+            {/* Central Peripheral Focal Dot */}
+            <div
+              className="absolute z-20 w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/80 pointer-events-none animate-pulse"
+              style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              title="Keep your gaze fixed here and use peripheral vision!"
+            />
+
+            <div
+              className={`grid gap-2 sm:gap-3 w-full max-w-md aspect-square ${
+                schulteSize === 3
+                  ? 'grid-cols-3'
+                  : schulteSize === 4
+                  ? 'grid-cols-4'
+                  : 'grid-cols-5'
+              }`}
+            >
+              {schulteNumbers.map(num => {
+                const isFound = num < schulteTarget;
+                const isError = schulteErrorNum === num;
+
+                return (
+                  <button
+                    key={`${num}_${schulteRound}`}
+                    onClick={() => handleSchulteClick(num)}
+                    disabled={isFound}
+                    className={`relative rounded-xl font-mono font-extrabold text-lg sm:text-2xl flex items-center justify-center transition-all select-none aspect-square ${
+                      isFound
+                        ? 'bg-emerald-950/40 text-emerald-500/50 border border-emerald-500/20 cursor-default'
+                        : isError
+                        ? 'bg-rose-950 text-rose-300 border-2 border-rose-500 animate-shake scale-95'
+                        : 'bg-slate-900 hover:bg-slate-800 active:scale-95 text-white border border-slate-800 hover:border-cyan-500/50 cursor-pointer shadow-sm'
+                    }`}
+                  >
+                    {isFound ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500/60" />
+                    ) : (
+                      num
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Completion Screen Banner */}
+            {schulteCompleted && (
+              <div className="absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-6 text-center space-y-4 animate-in fade-in zoom-in-95">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-emerald-400 p-0.5 shadow-xl shadow-amber-500/20">
+                  <div className="w-full h-full rounded-2xl bg-slate-950 flex items-center justify-center">
+                    <Trophy className="w-8 h-8 text-amber-400" />
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                    Schulte Grid Cleared!
+                  </span>
+                  <h4 className="text-2xl font-black text-white mt-1">
+                    {(schulteElapsedMs / 1000).toFixed(2)} Seconds
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {schulteElapsedMs < 22000
+                      ? '🏆 Olympian Peripheral Speed (< 22s)'
+                      : schulteElapsedMs < 32000
+                      ? '⚡ Elite Focus & Scanning (< 32s)'
+                      : schulteElapsedMs < 45000
+                      ? '🎯 Great Speed & Vision (< 45s)'
+                      : '🌱 Good training run! Repeat to expand vision field.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      resetSchulte(schulteSize, true);
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/25 flex items-center gap-2 active:scale-95"
+                  >
+                    <Shuffle className="w-4 h-4" />
+                    <span>Play Next Shuffled Round</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 1. SACCADIC DYNAMIC VISION TRACKER */}
       {subTab === 'saccades' && (
