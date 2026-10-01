@@ -65,7 +65,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
 
   const handleCycleTheme = () => {
     sounds.playClick();
-    const themes: AppSettings['theme'][] = ['cyber-slate', 'midnight-abyss', 'clean-light', 'monochrome-pattern', 'alpha-wolf'];
+    const themes: AppSettings['theme'][] = ['cyber-slate', 'midnight-abyss', 'clean-light', 'monochrome-pattern'];
     const nextIdx = (themes.indexOf(settings.theme) + 1) % themes.length;
     const nextTheme = themes[nextIdx];
     const updated = { ...settings, theme: nextTheme };
@@ -179,8 +179,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 <Moon className="w-4 h-4 text-purple-400" />
               ) : settings.theme === 'monochrome-pattern' ? (
                 <Contrast className="w-4 h-4 text-white" />
-              ) : settings.theme === 'alpha-wolf' ? (
-                <span className="text-sm leading-none select-none" role="img" aria-label="Alpha Wolf">🐺</span>
               ) : (
                 <Palette className="w-4 h-4 text-cyan-400" />
               )}
@@ -340,8 +338,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                     <Moon className="w-4 h-4 text-purple-400" />
                   ) : settings.theme === 'monochrome-pattern' ? (
                     <Contrast className="w-4 h-4 text-white" />
-                  ) : settings.theme === 'alpha-wolf' ? (
-                    <span className="text-sm leading-none select-none" role="img" aria-label="Alpha Wolf">🐺</span>
                   ) : (
                     <Palette className="w-4 h-4 text-cyan-400" />
                   )}

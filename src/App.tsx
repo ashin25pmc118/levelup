@@ -233,8 +233,6 @@ export function App() {
     ? 'theme-clean-light'
     : settings.theme === 'monochrome-pattern'
     ? 'theme-monochrome-pattern'
-    : settings.theme === 'alpha-wolf'
-    ? 'theme-alpha-wolf'
     : 'theme-cyber-slate';
 
   useEffect(() => {

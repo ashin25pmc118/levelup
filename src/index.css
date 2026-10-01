@@ -30,29 +30,54 @@
     border-color: #27272a !important;
   }
 
-  /* Clean Light Theme (Crisp Daylight Mode) */
+  /* Clean Light Theme (Crisp Daylight Mode - 100% High-Contrast Legibility) */
   .theme-clean-light {
     color-scheme: light;
     --app-bg: #f8fafc;
     --card-bg: #ffffff;
     --card-border: #e2e8f0;
     --text-main: #0f172a;
-    --text-muted: #64748b;
+    --text-muted: #475569;
     background-color: #f8fafc !important;
+    background-image: none !important;
     color: #0f172a !important;
   }
 
-  .theme-clean-light .bg-slate-950 {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-  }
-
-  .theme-clean-light .bg-slate-900 {
+  /* Header HUD & Sidebar Surfaces */
+  .theme-clean-light header,
+  .theme-clean-light aside,
+  .theme-clean-light [class*="bg-slate-950"] {
     background-color: #ffffff !important;
     border-color: #e2e8f0 !important;
     color: #0f172a !important;
   }
 
+  /* Cards and Containers */
+  .theme-clean-light [class*="bg-slate-900"] {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+  }
+
+  /* Neutralize dark gradient cards on dashboard and timetable */
+  .theme-clean-light [class*="bg-gradient-to-"][class*="from-slate-900"],
+  .theme-clean-light [class*="bg-gradient-to-"][class*="from-slate-950"],
+  .theme-clean-light [class*="from-cyan-950"],
+  .theme-clean-light [class*="to-slate-900"] {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* Borders */
+  .theme-clean-light [class*="border-slate-800"],
+  .theme-clean-light [class*="border-slate-700"],
+  .theme-clean-light [class*="border-slate-900"] {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Text Colors for Crisp Legibility */
   .theme-clean-light .text-white {
     color: #0f172a !important;
   }
@@ -61,13 +86,148 @@
     color: #1e293b !important;
   }
 
-  .theme-clean-light .text-slate-300,
+  .theme-clean-light .text-slate-200 {
+    color: #334155 !important;
+  }
+
+  .theme-clean-light .text-slate-300 {
+    color: #334155 !important;
+  }
+
   .theme-clean-light .text-slate-400 {
     color: #475569 !important;
   }
 
-  .theme-clean-light .border-slate-800 {
+  .theme-clean-light .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  /* Sidebar Navigation Items */
+  .theme-clean-light aside nav button {
+    color: #475569 !important;
+  }
+  .theme-clean-light aside nav button:hover {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+  .theme-clean-light aside nav button[class*="border-cyan"] {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border-color: #7dd3fc !important;
+  }
+
+  /* Accessible Deep Rich Jewel Accents (High Contrast Against White) */
+  .theme-clean-light .text-cyan-400,
+  .theme-clean-light .text-cyan-300 {
+    color: #0284c7 !important;
+  }
+
+  .theme-clean-light .text-purple-400,
+  .theme-clean-light .text-purple-300 {
+    color: #7c3aed !important;
+  }
+
+  .theme-clean-light .text-emerald-400,
+  .theme-clean-light .text-emerald-300 {
+    color: #059669 !important;
+  }
+
+  .theme-clean-light .text-amber-400,
+  .theme-clean-light .text-amber-300 {
+    color: #d97706 !important;
+  }
+
+  .theme-clean-light .text-rose-400,
+  .theme-clean-light .text-rose-300 {
+    color: #e11d48 !important;
+  }
+
+  /* Badges & Status Pills */
+  .theme-clean-light [class*="bg-cyan-950"] {
+    background-color: #ecfeff !important;
+    border-color: #a5f3fc !important;
+    color: #0e7490 !important;
+  }
+
+  .theme-clean-light [class*="bg-purple-950"] {
+    background-color: #faf5ff !important;
+    border-color: #e9d5ff !important;
+    color: #6b21a8 !important;
+  }
+
+  .theme-clean-light [class*="bg-emerald-950"] {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+    color: #047857 !important;
+  }
+
+  .theme-clean-light [class*="bg-amber-950"] {
+    background-color: #fffbeb !important;
+    border-color: #fde68a !important;
+    color: #b45309 !important;
+  }
+
+  .theme-clean-light [class*="bg-rose-950"] {
+    background-color: #fff1f2 !important;
+    border-color: #fecdd3 !important;
+    color: #be123c !important;
+  }
+
+  /* Quick Feature Hub Pills & Category Buttons */
+  .theme-clean-light [class*="Quick Feature Hub"] ~ div button,
+  .theme-clean-light .grid-cols-4 button,
+  .theme-clean-light .grid-cols-2 button {
+    background-color: #f8fafc !important;
     border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+  }
+  .theme-clean-light [class*="Quick Feature Hub"] ~ div button:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Primary Action Buttons & CTAs */
+  .theme-clean-light .bg-cyan-500,
+  .theme-clean-light .bg-cyan-400,
+  .theme-clean-light button[class*="bg-gradient-to-r from-cyan-400"] {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+  }
+  .theme-clean-light .bg-cyan-500:hover,
+  .theme-clean-light .bg-cyan-400:hover {
+    background: #0369a1 !important;
+  }
+
+  .theme-clean-light [class*="bg-cyan-500\/10"],
+  .theme-clean-light [class*="bg-cyan-500\/20"] {
+    background-color: #f0f9ff !important;
+    border-color: #bae6fd !important;
+    color: #0369a1 !important;
+  }
+  .theme-clean-light [class*="bg-cyan-500\/10"]:hover,
+  .theme-clean-light [class*="bg-cyan-500\/20"]:hover {
+    background-color: #e0f2fe !important;
+  }
+
+  /* Progress Bar Tracks */
+  .theme-clean-light [class*="bg-slate-950"].rounded-full,
+  .theme-clean-light .bg-slate-950.h-1\.5,
+  .theme-clean-light .bg-slate-950.h-2 {
+    background-color: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .theme-clean-light .stroke-slate-800 {
+    stroke: #e2e8f0 !important;
+  }
+
+  /* Modals & Overlays */
+  .theme-clean-light .fixed .bg-slate-900,
+  .theme-clean-light .fixed [class*="bg-slate-900"] {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
   }
 
   /* Monochrome Pattern Theme (High-Contrast Black & White with Geometric Grid Pattern) */
@@ -160,101 +320,6 @@
   }
 
   .theme-monochrome-pattern .stroke-cyan-400 {
-    stroke: #ffffff !important;
-  }
-
-  /* Alpha Wolf Noir Theme (Wolf Yin-Yang High-Contrast with Lunar Dark Glow) */
-  .theme-alpha-wolf {
-    color-scheme: dark;
-    --app-bg: #000000;
-    --card-bg: #080808;
-    --card-border: rgba(255, 255, 255, 0.28);
-    --text-main: #ffffff;
-    --text-muted: #a1a1aa;
-    background-color: #000000 !important;
-    background-image: 
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
-      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.12) 1px, transparent 0),
-      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px) !important;
-    background-size: 100% 450px, 22px 22px, 44px 44px, 44px 44px !important;
-    color: #ffffff !important;
-  }
-
-  .theme-alpha-wolf .bg-slate-950,
-  .theme-alpha-wolf .bg-slate-950\/85,
-  .theme-alpha-wolf .bg-slate-950\/60 {
-    background-color: #000000 !important;
-    border-color: rgba(255, 255, 255, 0.24) !important;
-  }
-
-  .theme-alpha-wolf .bg-slate-900,
-  .theme-alpha-wolf .bg-slate-900\/90,
-  .theme-alpha-wolf .bg-slate-900\/80 {
-    background-color: #09090b !important;
-    border-color: rgba(255, 255, 255, 0.28) !important;
-    box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.85) !important;
-  }
-
-  .theme-alpha-wolf .border-slate-800,
-  .theme-alpha-wolf .border-slate-800\/80,
-  .theme-alpha-wolf .border-slate-800\/50 {
-    border-color: rgba(255, 255, 255, 0.22) !important;
-  }
-
-  .theme-alpha-wolf .text-white {
-    color: #ffffff !important;
-  }
-
-  .theme-alpha-wolf .text-slate-100 {
-    color: #f4f4f5 !important;
-  }
-
-  .theme-alpha-wolf .text-slate-300 {
-    color: #e4e4e7 !important;
-  }
-
-  .theme-alpha-wolf .text-slate-400,
-  .theme-alpha-wolf .text-slate-500 {
-    color: #a1a1aa !important;
-  }
-
-  /* High contrast Alpha Wolf Accents */
-  .theme-alpha-wolf .text-cyan-400,
-  .theme-alpha-wolf .text-cyan-300,
-  .theme-alpha-wolf .text-purple-400,
-  .theme-alpha-wolf .text-purple-300,
-  .theme-alpha-wolf .text-emerald-400,
-  .theme-alpha-wolf .text-emerald-300,
-  .theme-alpha-wolf .text-amber-400 {
-    color: #ffffff !important;
-  }
-
-  .theme-alpha-wolf .bg-cyan-500,
-  .theme-alpha-wolf .bg-cyan-400 {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    font-weight: 800 !important;
-  }
-
-  .theme-alpha-wolf .border-cyan-500\/30,
-  .theme-alpha-wolf .border-cyan-500\/50,
-  .theme-alpha-wolf .border-purple-500\/30,
-  .theme-alpha-wolf .border-emerald-500\/30 {
-    border-color: rgba(255, 255, 255, 0.38) !important;
-  }
-
-  .theme-alpha-wolf .bg-cyan-950,
-  .theme-alpha-wolf .bg-cyan-950\/40,
-  .theme-alpha-wolf .bg-purple-950,
-  .theme-alpha-wolf .bg-emerald-950,
-  .theme-alpha-wolf .bg-amber-950 {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.28) !important;
-    color: #ffffff !important;
-  }
-
-  .theme-alpha-wolf .stroke-cyan-400 {
     stroke: #ffffff !important;
   }
 
