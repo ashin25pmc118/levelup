@@ -26,7 +26,8 @@ import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { MoreMenuModal } from './components/layout/MoreMenuModal';
 
-// Modals
+// Modals & Boundaries
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LevelUpModal } from './components/common/LevelUpModal';
 import { QuickNoteModal } from './components/common/QuickNoteModal';
 import { PlayerStatusCardModal } from './components/common/PlayerStatusCardModal';
@@ -169,10 +170,16 @@ export function App() {
       stat: Array.isArray(stat) ? stat.join(' + ') : stat
     });
 
-    // Level up trigger
+    // Level up trigger with haptic feedback
     if (result.leveledUp) {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate([40, 60, 40, 60, 100]); } catch {}
+      }
       setLevelUpProfile(result.updatedProfile);
     } else {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate(25); } catch {}
+      }
       sounds.playQuestComplete();
     }
   };
@@ -183,6 +190,9 @@ export function App() {
       if (q.id === questId) {
         const nextState = !q.isCompleted;
         if (nextState) {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            try { navigator.vibrate([15, 25, 15]); } catch {}
+          }
           handleAwardXP(q.targetXp, `Completed Quest: ${q.title}`, q.statTarget || 'discipline');
           return { ...q, isCompleted: true, completedAt: new Date().toISOString() };
         } else {
@@ -239,8 +249,9 @@ export function App() {
 
         {/* Main Content Viewport */}
         <main className="flex-1 p-3.5 sm:p-6 lg:p-8 pb-28 md:pb-12 max-w-full overflow-y-auto">
-          {currentTab === 'today' && (
-            <DashboardView
+          <ErrorBoundary>
+            {currentTab === 'today' && (
+              <DashboardView
               profile={profile}
               dailyQuests={dailyQuests}
               onToggleQuest={handleToggleDailyQuest}
@@ -381,6 +392,7 @@ export function App() {
               onReloadAllData={reloadAllData}
             />
           )}
+          </ErrorBoundary>
         </main>
       </div>
 

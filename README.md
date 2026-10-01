@@ -7,6 +7,13 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.3-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646cff?logo=vite)](https://vitejs.dev/)
 [![Offline First](https://img.shields.io/badge/Architecture-Offline--First_LocalStorage-emerald)](#)
+[![PWA Ready](https://img.shields.io/badge/PWA-Installable-purple?logo=pwa)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ashinmathai33-hash/new)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/ashinmathai33-hash/new)
+
+**Official Repository**: [https://github.com/ashinmathai33-hash/new.git](https://github.com/ashinmathai33-hash/new.git)
 
 ---
 
