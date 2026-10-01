@@ -149,8 +149,8 @@ export const CalisthenicsSkillTree: React.FC<CalisthenicsSkillTreeProps> = ({
         </div>
       </div>
 
-      {/* BRANCH TABS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      {/* BRANCH TABS (Always visible on desktop via flex-wrap) */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         {branches.map(b => (
           <button
             key={b.id}

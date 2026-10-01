@@ -189,8 +189,8 @@ export const ExerciseLibraryView: React.FC = () => {
           </div>
         </div>
 
-        {/* 15 CATEGORY PILLS */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+        {/* 15 CATEGORY PILLS (Always visible via flex-wrap) */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}

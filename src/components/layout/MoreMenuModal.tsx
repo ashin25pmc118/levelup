@@ -22,7 +22,7 @@ import { sounds } from '../../services/soundEffects';
 interface MoreMenuModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectTab: (tab: string) => void;
+  onSelectTab: (tab: string, subTab?: string) => void;
   currentTab: string;
   onOpenSmartwatch?: () => void;
 }
@@ -35,9 +35,9 @@ const ALL_SYSTEM_TOOLS = [
   { id: 'reminders', label: 'Reminders', desc: 'Alerts, water & daily habits', icon: Bell, color: 'text-cyan-400', bg: 'bg-cyan-950/40 border-cyan-500/30', keywords: 'reminders alerts habits notifications water' },
   { id: 'calendar', label: 'Calendar', desc: 'Day logs & history review', icon: CalendarDays, color: 'text-blue-400', bg: 'bg-blue-950/40 border-blue-500/30', keywords: 'calendar history log daily review' },
   { id: 'settings', label: 'Settings & JSON', desc: 'Configuration & full data backup', icon: Settings, color: 'text-slate-300', bg: 'bg-slate-900 border-slate-700', keywords: 'settings json backup restore export profile' },
-  { id: 'train', label: 'Schulte Table & Eye-Care', desc: 'Peripheral vision & 5x5 speed grid', icon: Grid, color: 'text-purple-400', bg: 'bg-purple-950/40 border-purple-500/30', keywords: 'schulte table vision speed peripheral eye care grid' },
-  { id: 'train', label: 'Reflex Tap Test', desc: 'Millisecond reaction test & agility', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-950/40 border-amber-500/30', keywords: 'reflex reaction millisecond agility badminton combat' },
-  { id: 'train', label: 'Calisthenics Skill Tree', desc: 'Pull-up, dip & push-up progression trees', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-950/40 border-yellow-500/30', keywords: 'calisthenics skill tree pullup pushup dips workouts' }
+  { id: 'train', subTab: 'eyecare', label: 'Schulte Table & Eye-Care', desc: 'Peripheral vision & 5x5 speed grid', icon: Grid, color: 'text-purple-400', bg: 'bg-purple-950/40 border-purple-500/30', keywords: 'schulte table vision speed peripheral eye care grid' },
+  { id: 'train', subTab: 'reflex', label: 'Reflex Tap Test', desc: 'Millisecond reaction test & agility', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-950/40 border-amber-500/30', keywords: 'reflex reaction millisecond agility badminton combat' },
+  { id: 'train', subTab: 'skills', label: 'Calisthenics Skill Tree', desc: 'Pull-up, dip & push-up progression trees', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-950/40 border-yellow-500/30', keywords: 'calisthenics skill tree pullup pushup dips workouts' }
 ];
 
 export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
@@ -51,9 +51,9 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSelect = (tabId: string) => {
+  const handleSelect = (tabId: string, subTab?: string) => {
     sounds.playClick();
-    onSelectTab(tabId);
+    onSelectTab(tabId, subTab);
     onClose();
   };
 
@@ -121,7 +121,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
               return (
                 <button
                   key={`${item.id}-${item.label}`}
-                  onClick={() => handleSelect(item.id)}
+                  onClick={() => handleSelect(item.id, item.subTab)}
                   className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
                     isSelected
                       ? 'border-cyan-500 bg-cyan-950/40 text-cyan-300'

@@ -76,6 +76,15 @@ export function App() {
 
   // UI state
   const [currentTab, setCurrentTab] = useState<string>('today');
+  const [trainSubTab, setTrainSubTab] = useState<'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex'>('today');
+
+  const handleNavigate = (tab: string, subTab?: string) => {
+    setCurrentTab(tab);
+    if (tab === 'train' && subTab) {
+      setTrainSubTab(subTab as any);
+    }
+  };
+
   const [isQuickNoteOpen, setIsQuickNoteOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
@@ -255,50 +264,52 @@ export function App() {
           <ErrorBoundary>
             {currentTab === 'today' && (
               <DashboardView
-              profile={profile}
-              dailyQuests={dailyQuests}
-              onToggleQuest={handleToggleDailyQuest}
-              todayEvents={todayEvents}
-              activeTemplateName={activeTemplate ? activeTemplate.name : 'College'}
-              confidenceQuest={todayConfidenceQuest}
-              exercises={exercises}
-              onNavigate={setCurrentTab}
-              settings={settings}
-              onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
-            />
-          )}
+                profile={profile}
+                dailyQuests={dailyQuests}
+                onToggleQuest={handleToggleDailyQuest}
+                todayEvents={todayEvents}
+                activeTemplateName={activeTemplate ? activeTemplate.name : 'College'}
+                confidenceQuest={todayConfidenceQuest}
+                exercises={exercises}
+                onNavigate={handleNavigate}
+                settings={settings}
+                onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
+              />
+            )}
 
-          {currentTab === 'timetable' && (
-            <TimetableModule
-              templates={templates}
-              events={events}
-              dateModes={dateModes}
-              onSaveTemplates={t => {
-                setTemplates(t);
-                storage.saveTemplates(t);
-              }}
-              onSaveEvents={e => {
-                setEvents(e);
-                storage.saveEvents(e);
-              }}
-              onSaveDateModes={m => {
-                setDateModes(m);
-                storage.saveDateModes(m);
-              }}
-              onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
-            />
-          )}
+            {currentTab === 'timetable' && (
+              <TimetableModule
+                templates={templates}
+                events={events}
+                dateModes={dateModes}
+                onSaveTemplates={t => {
+                  setTemplates(t);
+                  storage.saveTemplates(t);
+                }}
+                onSaveEvents={e => {
+                  setEvents(e);
+                  storage.saveEvents(e);
+                }}
+                onSaveDateModes={m => {
+                  setDateModes(m);
+                  storage.saveDateModes(m);
+                }}
+                onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
+              />
+            )}
 
-          {currentTab === 'train' && (
-            <TrainModule
-              exercises={exercises}
-              onSaveExercises={ex => {
-                setExercises(ex);
-                storage.saveExercises(ex);
-              }}
-              onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
-            />
-          )}
+            {currentTab === 'train' && (
+              <TrainModule
+                exercises={exercises}
+                onSaveExercises={ex => {
+                  setExercises(ex);
+                  storage.saveExercises(ex);
+                }}
+                onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
+                initialTab={trainSubTab}
+                onTabChange={t => setTrainSubTab(t as any)}
+              />
+            )}
 
           {currentTab === 'focus' && (
             <FocusModule
@@ -411,7 +422,7 @@ export function App() {
       <MoreMenuModal
         isOpen={isMoreMenuOpen}
         onClose={() => setIsMoreMenuOpen(false)}
-        onSelectTab={setCurrentTab}
+        onSelectTab={handleNavigate}
         currentTab={currentTab}
         onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
       />

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../../../services/soundEffects';
+import { useDragScroll } from '../../../hooks/useDragScroll';
 
 interface EyeCareTrainerProps {
   onAwardXP: (amount: number, description: string, stat: 'awareness' | 'recovery' | 'reflex') => void;
@@ -40,6 +41,7 @@ function generateSchulteGrid(size: number): number[] {
 
 export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => {
   const [subTab, setSubTab] = useState<'schulte' | 'saccades' | 'nearfar' | 'break20' | 'palming' | 'science'>('schulte');
+  const subTabScroll = useDragScroll();
 
   // ==========================================
   // 0. SCHULTE TABLE: PERIPHERAL VISION & SPEED
@@ -319,8 +321,12 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
-      {/* Sub-navigation (Swipeable horizontal on mobile, clean row on desktop) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-2xl bg-slate-950 border border-slate-800 scrollbar-none">
+      {/* Sub-navigation (Wraps cleanly on desktop, swipeable/draggable on mobile) */}
+      <div 
+        ref={subTabScroll.ref}
+        {...subTabScroll.dragProps}
+        className="flex md:flex-wrap items-center gap-1.5 overflow-x-auto md:overflow-visible p-1.5 rounded-2xl bg-slate-950 border border-slate-800 scrollbar-none cursor-grab active:cursor-grabbing select-none"
+      >
         {[
           { id: 'schulte', label: '🔢 Schulte Table (Peripheral Speed)', icon: Grid },
           { id: 'saccades', label: '🏸 Dynamic Vision (Badminton/Combat)', icon: Zap },
@@ -334,6 +340,7 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
             <button
               key={item.id}
               onClick={() => {
+                if (subTabScroll.hasMoved.current) return;
                 sounds.playClick();
                 setSubTab(item.id as typeof subTab);
               }}

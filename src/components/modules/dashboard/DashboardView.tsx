@@ -40,7 +40,7 @@ interface DashboardViewProps {
   activeTemplateName: string;
   confidenceQuest: ConfidenceQuest | null;
   exercises: Exercise[];
-  onNavigate: (tab: string) => void;
+  onNavigate: (tab: string, subTab?: string) => void;
   settings: AppSettings;
   onOpenSmartwatch?: () => void;
 }
@@ -263,14 +263,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2">
           {[
-            { id: 'workout', label: 'Workout', icon: Dumbbell, color: 'text-cyan-400', bg: 'bg-cyan-950/40 border-cyan-500/30', action: () => onNavigate('train') },
-            { id: 'schulte', label: 'Schulte', icon: Grid, color: 'text-purple-400', bg: 'bg-purple-950/40 border-purple-500/30', action: () => onNavigate('train') },
-            { id: 'reflex', label: 'Reflex', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-950/40 border-amber-500/30', action: () => onNavigate('train') },
+            { id: 'workout', label: 'Workout', icon: Dumbbell, color: 'text-cyan-400', bg: 'bg-cyan-950/40 border-cyan-500/30', action: () => onNavigate('train', 'today') },
+            { id: 'schulte', label: 'Schulte', icon: Grid, color: 'text-purple-400', bg: 'bg-purple-950/40 border-purple-500/30', action: () => onNavigate('train', 'eyecare') },
+            { id: 'reflex', label: 'Reflex', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-950/40 border-amber-500/30', action: () => onNavigate('train', 'reflex') },
             { id: 'focus', label: 'Pomodoro', icon: Brain, color: 'text-blue-400', bg: 'bg-blue-950/40 border-blue-500/30', action: () => onNavigate('focus') },
             { id: 'schedule', label: 'Schedule', icon: Calendar, color: 'text-emerald-400', bg: 'bg-emerald-950/40 border-emerald-500/30', action: () => onNavigate('timetable') },
             { id: 'quests', label: 'Quests', icon: CheckCircle2, color: 'text-pink-400', bg: 'bg-pink-950/40 border-pink-500/30', action: () => onNavigate('quests') },
-            { id: 'watch', label: 'Smartwatch', icon: Watch, color: 'text-rose-400', bg: 'bg-rose-950/40 border-rose-500/30', action: () => onOpenSmartwatch ? onOpenSmartwatch() : onNavigate('train') },
-            { id: 'skills', label: 'Skill Tree', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-950/40 border-yellow-500/30', action: () => onNavigate('train') }
+            { id: 'watch', label: 'Smartwatch', icon: Watch, color: 'text-rose-400', bg: 'bg-rose-950/40 border-rose-500/30', action: () => onOpenSmartwatch ? onOpenSmartwatch() : onNavigate('train', 'today') },
+            { id: 'skills', label: 'Skill Tree', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-950/40 border-yellow-500/30', action: () => onNavigate('train', 'skills') }
           ].map(tile => {
             const Icon = tile.icon;
             return (

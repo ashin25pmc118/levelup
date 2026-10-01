@@ -61,11 +61,14 @@ import { FitnessBenchmarkTests } from '../fitness/FitnessBenchmarkTests';
 import { ExerciseVisualGuide } from '../../common/ExerciseVisualGuide';
 import { EyeCareTrainer } from './EyeCareTrainer';
 import { ReflexHub } from './ReflexHub';
+import { useDragScroll } from '../../../hooks/useDragScroll';
 
 interface TrainModuleProps {
   exercises: Exercise[];
   onSaveExercises: (exercises: Exercise[]) => void;
   onAwardXP: (amount: number, description: string, stat: 'strength' | 'stamina' | 'reflex' | 'awareness' | 'recovery') => void;
+  initialTab?: 'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex';
+  onTabChange?: (tab: string) => void;
 }
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -73,25 +76,42 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 export const TrainModule: React.FC<TrainModuleProps> = ({
   exercises,
   onSaveExercises,
-  onAwardXP
+  onAwardXP,
+  initialTab,
+  onTabChange
 }) => {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<
     'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex'
-  >('today');
+  >(initialTab || 'today');
   const [isMobileModeMenuOpen, setIsMobileModeMenuOpen] = useState(false);
   const [isIntroCollapsed, setIsIntroCollapsed] = useState(false);
 
+  // Sync external tab changes (e.g. from Dashboard 1-tap tile or MoreMenu search)
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  const handleSelectTab = (tabId: typeof activeTab) => {
+    sounds.playClick();
+    setActiveTab(tabId);
+    if (onTabChange) onTabChange(tabId);
+  };
+
+  const mobilePillsScroll = useDragScroll();
+
   const TRAIN_TABS = [
-    { id: 'today', label: "Today's Workout", shortLabel: 'Workout', icon: Zap, color: 'text-cyan-400', desc: 'Autoregulated Calisthenics Routine' },
-    { id: 'skills', label: 'Calisthenics Skill Tree', shortLabel: 'Skill Tree', icon: Trophy, color: 'text-amber-400', desc: 'Pull-up, Push-up, Dip Trees' },
-    { id: 'library', label: 'Exercise Library (15 Cat)', shortLabel: 'Library', icon: BookOpen, color: 'text-purple-400', desc: '100+ Exercise Animations & Cues' },
-    { id: 'roadmap', label: '12-Month Periodization', shortLabel: '12M Plan', icon: Calendar, color: 'text-emerald-400', desc: 'Beginner to Advanced Roadmap' },
-    { id: 'benchmarks', label: 'PR Benchmarks', shortLabel: 'PR Tests', icon: Award, color: 'text-pink-400', desc: 'Max Reps & Hold Records' },
-    { id: 'classic', label: 'Quick Log & Cardio', shortLabel: 'Cardio', icon: Flame, color: 'text-orange-400', desc: 'Running, Walking & Free Sets' },
-    { id: 'eyecare', label: 'Eye-Care & Schulte Table', shortLabel: 'Schulte & Eyes', icon: Eye, color: 'text-blue-400', desc: 'Peripheral Vision & Saccades' },
-    { id: 'reflex', label: 'Reflex Test', shortLabel: 'Reflexes', icon: Activity, color: 'text-green-400', desc: 'Millisecond Digital Tap & Agility' }
-  ];
+    { id: 'today', label: "Today's Workout", shortLabel: 'Workout', icon: Zap, color: 'text-cyan-400', desc: 'Autoregulated Calisthenics Routine', group: 'fitness' },
+    { id: 'skills', label: 'Calisthenics Skill Tree', shortLabel: 'Skill Tree', icon: Trophy, color: 'text-amber-400', desc: 'Pull-up, Push-up, Dip Trees', group: 'fitness' },
+    { id: 'library', label: 'Exercise Library (15 Cat)', shortLabel: 'Library', icon: BookOpen, color: 'text-purple-400', desc: '100+ Exercise Animations & Cues', group: 'fitness' },
+    { id: 'roadmap', label: '12-Month Periodization', shortLabel: '12M Plan', icon: Calendar, color: 'text-emerald-400', desc: 'Beginner to Advanced Roadmap', group: 'fitness' },
+    { id: 'benchmarks', label: 'PR Benchmarks', shortLabel: 'PR Tests', icon: Award, color: 'text-pink-400', desc: 'Max Reps & Hold Records', group: 'fitness' },
+    { id: 'classic', label: 'Quick Log & Cardio', shortLabel: 'Cardio', icon: Flame, color: 'text-orange-400', desc: 'Running, Walking & Free Sets', group: 'fitness' },
+    { id: 'eyecare', label: 'Eye-Care & Schulte Table', shortLabel: 'Schulte & Eyes', icon: Eye, color: 'text-purple-300', desc: 'Peripheral Vision & Saccades', group: 'cognitive' },
+    { id: 'reflex', label: 'Reflex Test', shortLabel: 'Reflexes', icon: Activity, color: 'text-green-400', desc: 'Millisecond Digital Tap & Agility', group: 'cognitive' }
+  ] as const;
 
   // Fitness Profile & Progression States
   const [fitnessProfile, setFitnessProfile] = useState<UserFitnessProfile>(() => storage.getFitnessProfile());
@@ -332,29 +352,84 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
       {/* ======================================================== */}
       {/* 1. DESKTOP TAB NAVIGATION (md: and up - 16:9 widescreen) */}
       {/* ======================================================== */}
-      <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {TRAIN_TABS.map(tab => {
-          const Icon = tab.icon;
-          const isSel = activeTab === tab.id;
+      <div className="hidden md:flex flex-col gap-3 p-3.5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
+        {/* Tier 1: Calisthenics & Physical Mastery */}
+        <div>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <Dumbbell className="w-3.5 h-3.5 text-cyan-400" />
+              Calisthenics & Physical Mastery
+            </span>
+            <span className="text-[10px] text-slate-500 font-semibold">
+              6 Modes
+            </span>
+          </div>
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab(tab.id as any);
-              }}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
-                isSel
-                  ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 shadow-lg shadow-cyan-500/20'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800'
-              }`}
-            >
-              <Icon className={`w-3.5 h-3.5 ${isSel ? 'text-slate-950' : tab.color}`} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+          <div className="flex flex-wrap items-center gap-2">
+            {TRAIN_TABS.filter(t => t.group === 'fitness').map(tab => {
+              const Icon = tab.icon;
+              const isSel = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleSelectTab(tab.id as any)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
+                    isSel
+                      ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400'
+                      : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isSel ? 'text-slate-950' : tab.color}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tier 2: Cognitive Speed, Vision & Reflex Training */}
+        <div className="pt-2.5 border-t border-slate-800/80">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5 text-purple-400" />
+              Cognitive Speed, Vision & Reflexes
+            </span>
+            <span className="text-[10px] text-purple-400 font-semibold">
+              Peripheral Vision & Agility
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {TRAIN_TABS.filter(t => t.group === 'cognitive').map(tab => {
+              const Icon = tab.icon;
+              const isSel = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleSelectTab(tab.id as any)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
+                    isSel
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black shadow-lg shadow-purple-500/25 ring-2 ring-purple-400'
+                      : 'bg-purple-950/40 hover:bg-purple-900/50 text-purple-200 border border-purple-500/40 hover:border-purple-300'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isSel ? 'text-white' : tab.color}`} />
+                  <span className="font-extrabold">{tab.label}</span>
+                  {tab.id === 'eyecare' && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-900/80 text-purple-200 border border-purple-500/50 font-mono font-bold">
+                      Schulte 5×5
+                    </span>
+                  )}
+                  {tab.id === 'reflex' && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-900/80 text-purple-200 border border-purple-500/50 font-mono font-bold">
+                      ms Tap
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* ======================================================== */}
@@ -393,8 +468,12 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
           </button>
         </div>
 
-        {/* Compact Horizontal Quick-Pill Switcher */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {/* Compact Horizontal Quick-Pill Switcher (Drag-to-Scroll + Wheel enabled) */}
+        <div 
+          ref={mobilePillsScroll.ref}
+          {...mobilePillsScroll.dragProps}
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none cursor-grab active:cursor-grabbing select-none"
+        >
           {TRAIN_TABS.map(tab => {
             const Icon = tab.icon;
             const isSel = activeTab === tab.id;
@@ -402,8 +481,8 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
               <button
                 key={tab.id}
                 onClick={() => {
-                  sounds.playClick();
-                  setActiveTab(tab.id as any);
+                  if (mobilePillsScroll.hasMoved.current) return;
+                  handleSelectTab(tab.id as any);
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all shrink-0 active:scale-95 ${
                   isSel
