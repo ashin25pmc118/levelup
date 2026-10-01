@@ -15,7 +15,11 @@ import {
   Zap,
   Check,
   BookOpen,
-  Plus
+  Plus,
+  Grid,
+  Watch,
+  Trophy,
+  Compass
 } from 'lucide-react';
 import {
   UserProfile,
@@ -38,6 +42,7 @@ interface DashboardViewProps {
   exercises: Exercise[];
   onNavigate: (tab: string) => void;
   settings: AppSettings;
+  onOpenSmartwatch?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -47,7 +52,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   todayEvents,
   activeTemplateName,
   confidenceQuest,
-  onNavigate
+  onNavigate,
+  onOpenSmartwatch
 }) => {
   const [xpAnimId, setXpAnimId] = useState<string | null>(null);
 
@@ -241,6 +247,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 🧭 1-TAP QUICK ACTION COMMAND HUB (Solves Mobile Feature Discovery) */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5 shadow-md">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5 text-cyan-400" /> Quick Feature Hub
+          </span>
+          <span className="text-[10px] text-cyan-400 font-bold hidden xs:inline">
+            1-Tap Instant Launch
+          </span>
+        </div>
+
+        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2">
+          {[
+            { id: 'workout', label: 'Workout', icon: Dumbbell, color: 'text-cyan-400', bg: 'bg-cyan-950/40 border-cyan-500/30', action: () => onNavigate('train') },
+            { id: 'schulte', label: 'Schulte', icon: Grid, color: 'text-purple-400', bg: 'bg-purple-950/40 border-purple-500/30', action: () => onNavigate('train') },
+            { id: 'reflex', label: 'Reflex', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-950/40 border-amber-500/30', action: () => onNavigate('train') },
+            { id: 'focus', label: 'Pomodoro', icon: Brain, color: 'text-blue-400', bg: 'bg-blue-950/40 border-blue-500/30', action: () => onNavigate('focus') },
+            { id: 'schedule', label: 'Schedule', icon: Calendar, color: 'text-emerald-400', bg: 'bg-emerald-950/40 border-emerald-500/30', action: () => onNavigate('timetable') },
+            { id: 'quests', label: 'Quests', icon: CheckCircle2, color: 'text-pink-400', bg: 'bg-pink-950/40 border-pink-500/30', action: () => onNavigate('quests') },
+            { id: 'watch', label: 'Smartwatch', icon: Watch, color: 'text-rose-400', bg: 'bg-rose-950/40 border-rose-500/30', action: () => onOpenSmartwatch ? onOpenSmartwatch() : onNavigate('train') },
+            { id: 'skills', label: 'Skill Tree', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-950/40 border-yellow-500/30', action: () => onNavigate('train') }
+          ].map(tile => {
+            const Icon = tile.icon;
+            return (
+              <button
+                key={tile.id}
+                onClick={() => {
+                  sounds.playClick();
+                  tile.action();
+                }}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl border ${tile.bg} hover:border-cyan-400/50 hover:bg-slate-800/80 transition-all active:scale-95 group text-center cursor-pointer min-h-[64px]`}
+                title={`Launch ${tile.label}`}
+              >
+                <div className={`p-1 rounded-lg mb-0.5 ${tile.color} group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-200 group-hover:text-white line-clamp-1">
+                  {tile.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

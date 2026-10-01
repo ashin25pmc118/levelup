@@ -16,7 +16,9 @@ import {
   CheckCircle2,
   RefreshCw,
   HelpCircle,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../../../services/soundEffects';
@@ -51,6 +53,7 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
   const [schulteChaosMode, setSchulteChaosMode] = useState<boolean>(false);
   const [schulteErrorNum, setSchulteErrorNum] = useState<number | null>(null);
   const [schulteRound, setSchulteRound] = useState<number>(1);
+  const [isSchulteInfoOpen, setIsSchulteInfoOpen] = useState<boolean>(false);
   const schulteTimerRef = useRef<any | null>(null);
   const schulteStartRef = useRef<number>(0);
 
@@ -316,8 +319,8 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
-      {/* Sub-navigation */}
-      <div className="flex flex-wrap gap-1.5 p-1.5 rounded-xl bg-slate-950 border border-slate-800">
+      {/* Sub-navigation (Swipeable horizontal on mobile, clean row on desktop) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-2xl bg-slate-950 border border-slate-800 scrollbar-none">
         {[
           { id: 'schulte', label: '🔢 Schulte Table (Peripheral Speed)', icon: Grid },
           { id: 'saccades', label: '🏸 Dynamic Vision (Badminton/Combat)', icon: Zap },
@@ -334,9 +337,9 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
                 sounds.playClick();
                 setSubTab(item.id as typeof subTab);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
                 isSel
-                  ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                  ? 'bg-cyan-500 text-slate-950 font-black shadow-sm'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
@@ -348,20 +351,20 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
 
       {/* 0. SCHULTE TABLE: PERIPHERAL VISION & SPEED */}
       {subTab === 'schulte' && (
-        <div className="p-5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
+        <div className="p-4 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
             <div>
               <div className="flex items-center gap-2">
                 <span className="p-1 rounded-md bg-cyan-950 text-cyan-400 border border-cyan-500/30">
                   <Grid className="w-4 h-4" />
                 </span>
-                <h3 className="text-lg font-black text-white">Schulte Table: Peripheral Vision & Speed</h3>
+                <h3 className="text-base sm:text-lg font-black text-white">Schulte Table: Peripheral Vision & Speed</h3>
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-950 text-purple-300 border border-purple-500/30">
                   Round #{schulteRound}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
                 Fix your gaze on the <strong>center dot</strong>. Locate numbers sequentially from <strong>1 to {totalSchulteCells}</strong> using only your <strong>peripheral vision</strong>.
               </p>
             </div>
@@ -380,15 +383,26 @@ export const EyeCareTrainer: React.FC<EyeCareTrainerProps> = ({ onAwardXP }) => 
             </button>
           </div>
 
-          {/* SCIENTIFIC EXPLANATION BANNER */}
-          <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-xs text-slate-300 space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-cyan-300">
-              <HelpCircle className="w-4 h-4 shrink-0" />
-              <span>Why does the number pattern change every time?</span>
-            </div>
-            <p className="leading-relaxed text-slate-400 text-[11px]">
-              By Walter Schulte's scientific protocol, <strong>the numbers MUST randomize on every round</strong>. If the numbers stayed in fixed spots, your brain would use muscle memory rather than your visual field. A new randomized pattern every game forces your eyes to expand their peripheral field of view, eliminates subconscious eye-head turning, and speeds up mental processing!
-            </p>
+          {/* SCIENTIFIC EXPLANATION BANNER (Collapsible for Mobile Ergonomics) */}
+          <div className="rounded-xl bg-cyan-950/30 border border-cyan-500/30 overflow-hidden text-xs text-slate-300">
+            <button
+              onClick={() => setIsSchulteInfoOpen(!isSchulteInfoOpen)}
+              className="w-full p-2.5 sm:p-3 flex items-center justify-between text-left hover:bg-cyan-900/20 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5 font-bold text-cyan-300">
+                <HelpCircle className="w-4 h-4 shrink-0" />
+                <span className="text-[11px] sm:text-xs">Why does the number pattern change every time?</span>
+              </div>
+              <span className="text-[10px] text-cyan-400 flex items-center gap-1 shrink-0 font-bold">
+                {isSchulteInfoOpen ? 'Collapse' : 'Explain'}
+                {isSchulteInfoOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </span>
+            </button>
+            {isSchulteInfoOpen && (
+              <div className="p-3 pt-0 border-t border-cyan-500/20 text-slate-300 text-[11px] leading-relaxed animate-in fade-in duration-150">
+                By Walter Schulte's scientific protocol, <strong>the numbers MUST randomize on every round</strong>. If the numbers stayed in fixed spots, your brain would use muscle memory rather than your visual field. A new randomized pattern every game forces your eyes to expand their peripheral field of view, eliminates subconscious eye-head turning, and speeds up mental processing!
+              </div>
+            )}
           </div>
 
           {/* Controls Bar: Size Selector & Chaos Mode Toggle */}

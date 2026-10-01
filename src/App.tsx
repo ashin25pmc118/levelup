@@ -264,6 +264,7 @@ export function App() {
               exercises={exercises}
               onNavigate={setCurrentTab}
               settings={settings}
+              onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
             />
           )}
 

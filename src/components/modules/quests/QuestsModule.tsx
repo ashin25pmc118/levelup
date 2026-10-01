@@ -201,34 +201,38 @@ export const QuestsModule: React.FC<QuestsModuleProps> = ({
 
                 <div className="flex items-center gap-2 shrink-0 ml-3">
                   {/* Reordering and Edit buttons */}
-                  <div className="opacity-75 sm:opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                  <div className="opacity-80 sm:opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
                     <button
                       onClick={e => handleMoveQuest(idx, 'up', e)}
                       disabled={idx === 0}
-                      className="p-1 rounded text-slate-500 hover:text-white disabled:opacity-20"
+                      className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded text-slate-500 hover:text-white disabled:opacity-20"
                       title="Move Up"
+                      aria-label="Move Up"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={e => handleMoveQuest(idx, 'down', e)}
                       disabled={idx === dailyQuests.length - 1}
-                      className="p-1 rounded text-slate-500 hover:text-white disabled:opacity-20"
+                      className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded text-slate-500 hover:text-white disabled:opacity-20"
                       title="Move Down"
+                      aria-label="Move Down"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={e => handleOpenEditModal(quest, e)}
-                      className="p-1 rounded text-slate-500 hover:text-cyan-400"
+                      className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded text-slate-500 hover:text-cyan-400"
                       title="Edit Quest"
+                      aria-label="Edit Quest"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={e => handleDeleteQuest(quest.id, e)}
-                      className="p-1 rounded text-slate-500 hover:text-red-400"
+                      className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded text-slate-500 hover:text-red-400"
                       title="Delete Quest"
+                      aria-label="Delete Quest"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

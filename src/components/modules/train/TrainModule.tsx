@@ -27,7 +27,11 @@ import {
   ChevronRight,
   Info,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  X
 } from 'lucide-react';
 import {
   Exercise,
@@ -75,6 +79,19 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
   const [activeTab, setActiveTab] = useState<
     'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex'
   >('today');
+  const [isMobileModeMenuOpen, setIsMobileModeMenuOpen] = useState(false);
+  const [isIntroCollapsed, setIsIntroCollapsed] = useState(false);
+
+  const TRAIN_TABS = [
+    { id: 'today', label: "Today's Workout", shortLabel: 'Workout', icon: Zap, color: 'text-cyan-400', desc: 'Autoregulated Calisthenics Routine' },
+    { id: 'skills', label: 'Calisthenics Skill Tree', shortLabel: 'Skill Tree', icon: Trophy, color: 'text-amber-400', desc: 'Pull-up, Push-up, Dip Trees' },
+    { id: 'library', label: 'Exercise Library (15 Cat)', shortLabel: 'Library', icon: BookOpen, color: 'text-purple-400', desc: '100+ Exercise Animations & Cues' },
+    { id: 'roadmap', label: '12-Month Periodization', shortLabel: '12M Plan', icon: Calendar, color: 'text-emerald-400', desc: 'Beginner to Advanced Roadmap' },
+    { id: 'benchmarks', label: 'PR Benchmarks', shortLabel: 'PR Tests', icon: Award, color: 'text-pink-400', desc: 'Max Reps & Hold Records' },
+    { id: 'classic', label: 'Quick Log & Cardio', shortLabel: 'Cardio', icon: Flame, color: 'text-orange-400', desc: 'Running, Walking & Free Sets' },
+    { id: 'eyecare', label: 'Eye-Care & Schulte Table', shortLabel: 'Schulte & Eyes', icon: Eye, color: 'text-blue-400', desc: 'Peripheral Vision & Saccades' },
+    { id: 'reflex', label: 'Reflex Test', shortLabel: 'Reflexes', icon: Activity, color: 'text-green-400', desc: 'Millisecond Digital Tap & Agility' }
+  ];
 
   // Fitness Profile & Progression States
   const [fitnessProfile, setFitnessProfile] = useState<UserFitnessProfile>(() => storage.getFitnessProfile());
@@ -259,21 +276,33 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
       )}
 
       {/* TOP HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="p-1.5 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-500/30">
-              <Dumbbell className="w-5 h-5" />
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-white">Bodyweight & Calisthenics Engine</h2>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
+        <div className="flex-1">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+                <Dumbbell className="w-5 h-5" />
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-white">Bodyweight & Calisthenics Engine</h2>
+            </div>
+            {/* Mobile Info Toggle */}
+            <button
+              onClick={() => setIsIntroCollapsed(!isIntroCollapsed)}
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Toggle Description"
+            >
+              {isIntroCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
           </div>
-          <p className="text-xs text-slate-400 max-w-xl">
-            12-Month Progressive System for Beginners (~10 push-up baseline). Safe joint loading, autoregulated reps, zero gym equipment.
-          </p>
+          {!isIntroCollapsed && (
+            <p className="text-xs text-slate-400 max-w-xl leading-relaxed mt-1 animate-in fade-in duration-150">
+              12-Month Progressive System for Beginners (~10 push-up baseline). Safe joint loading, autoregulated reps, zero gym equipment.
+            </p>
+          )}
         </div>
 
         {/* Global Mode Switcher: Home vs Hostel */}
-        <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-2xl border border-slate-800 shrink-0">
+        <div className="flex items-center gap-2 bg-slate-950 p-1.5 sm:p-2 rounded-2xl border border-slate-800 shrink-0 self-start sm:self-auto">
           <span className="text-[10px] uppercase font-bold text-slate-500 pl-2">Mode:</span>
           <button
             onClick={() => handleToggleEnvironment('home')}
@@ -300,18 +329,11 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
         </div>
       </div>
 
-      {/* MODERN TAB NAVIGATION */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {[
-          { id: 'today', label: "Today's Workout", icon: Zap, color: 'text-cyan-400' },
-          { id: 'skills', label: 'Calisthenics Skill Tree', icon: Trophy, color: 'text-amber-400' },
-          { id: 'library', label: 'Exercise Library (15 Cat)', icon: BookOpen, color: 'text-purple-400' },
-          { id: 'roadmap', label: '12-Month Periodization', icon: Calendar, color: 'text-emerald-400' },
-          { id: 'benchmarks', label: 'PR Benchmarks', icon: Award, color: 'text-pink-400' },
-          { id: 'classic', label: 'Quick Log & Cardio', icon: Flame, color: 'text-orange-400' },
-          { id: 'eyecare', label: 'Eye-Care & Schulte Table', icon: Eye, color: 'text-blue-400' },
-          { id: 'reflex', label: 'Reflex Test', icon: Activity, color: 'text-green-400' }
-        ].map(tab => {
+      {/* ======================================================== */}
+      {/* 1. DESKTOP TAB NAVIGATION (md: and up - 16:9 widescreen) */}
+      {/* ======================================================== */}
+      <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {TRAIN_TABS.map(tab => {
           const Icon = tab.icon;
           const isSel = activeTab === tab.id;
 
@@ -334,6 +356,128 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
           );
         })}
       </div>
+
+      {/* ======================================================== */}
+      {/* 2. MOBILE TRAINING NAVIGATION (md:hidden - 9:16 mobile) */}
+      {/* ======================================================== */}
+      <div className="flex md:hidden flex-col gap-2">
+        {/* Active Mode Display & Mode Switcher Button */}
+        <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-900 border border-cyan-500/30">
+          <div className="flex items-center gap-2.5">
+            {(() => {
+              const current = TRAIN_TABS.find(t => t.id === activeTab) || TRAIN_TABS[0];
+              const Icon = current.icon;
+              return (
+                <>
+                  <div className={`p-2 rounded-xl bg-slate-950 border border-slate-800 ${current.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Active Section</span>
+                    <span className="text-xs font-black text-white">{current.label}</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          <button
+            onClick={() => {
+              sounds.playClick();
+              setIsMobileModeMenuOpen(true);
+            }}
+            className="px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>All Modes (8)</span>
+          </button>
+        </div>
+
+        {/* Compact Horizontal Quick-Pill Switcher */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {TRAIN_TABS.map(tab => {
+            const Icon = tab.icon;
+            const isSel = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  sounds.playClick();
+                  setActiveTab(tab.id as any);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all shrink-0 active:scale-95 ${
+                  isSel
+                    ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black shadow-md'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isSel ? 'text-slate-950' : tab.color}`} />
+                <span>{tab.shortLabel}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* MOBILE TRAINING MODE SELECTION MODAL SHEET */}
+      {/* ======================================================== */}
+      {isMobileModeMenuOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 bg-slate-950/85 backdrop-blur-md animate-in fade-in md:hidden">
+          <div className="w-full bg-slate-900 border-t border-cyan-500/30 rounded-t-3xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+                  <Layers className="w-4 h-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-black text-white">Select Training Mode</h3>
+                  <p className="text-[11px] text-slate-400">All 8 Calisthenics, Vision & Reflex modules</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMobileModeMenuOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {TRAIN_TABS.map(tab => {
+                const Icon = tab.icon;
+                const isSel = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      sounds.playClick();
+                      setActiveTab(tab.id as any);
+                      setIsMobileModeMenuOpen(false);
+                    }}
+                    className={`flex items-start gap-3 p-3 rounded-2xl border text-left transition-all active:scale-[0.98] ${
+                      isSel
+                        ? 'bg-cyan-950/40 border-cyan-500 text-cyan-300 shadow-md'
+                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className={`p-2.5 rounded-xl bg-slate-900 border border-slate-800 ${tab.color} shrink-0`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-white flex items-center gap-1.5">
+                        <span>{tab.label}</span>
+                        {isSel && <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500 text-slate-950 font-bold uppercase">Active</span>}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 mt-0.5 leading-snug">{tab.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* 1. TODAY'S WORKOUT TAB */}

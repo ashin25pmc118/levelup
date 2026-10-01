@@ -520,7 +520,7 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
       </div>
 
       {/* MAIN ACTIVE EXERCISE AREA */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-3xl mx-auto w-full space-y-4">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 sm:pb-8 max-w-3xl mx-auto w-full space-y-4">
         {/* Block Badge & Title */}
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-semibold uppercase tracking-wider border border-slate-700">
@@ -711,17 +711,19 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                       sounds.playClick();
                       setActualReps(r => Math.max(1, r - 1));
                     }}
-                    className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xl flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+                    aria-label="Decrease reps"
                   >
                     -
                   </button>
-                  <span className="font-mono text-2xl font-black text-cyan-300 w-10 text-center">{actualReps}</span>
+                  <span className="font-mono text-2xl font-black text-cyan-300 w-12 text-center">{actualReps}</span>
                   <button
                     onClick={() => {
                       sounds.playClick();
                       setActualReps(r => r + 1);
                     }}
-                    className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xl flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+                    aria-label="Increase reps"
                   >
                     +
                   </button>

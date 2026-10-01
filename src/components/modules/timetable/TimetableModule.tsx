@@ -275,7 +275,8 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
                 <div className="flex items-start sm:items-center gap-3">
                   <button
                     onClick={() => handleToggleComplete(event)}
-                    className="mt-0.5 sm:mt-0 text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="mt-0.5 sm:mt-0 p-1 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-colors"
+                    aria-label={event.isCompleted ? 'Mark incomplete' : 'Mark completed'}
                   >
                     {event.isCompleted ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950" />
@@ -320,31 +321,34 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 shrink-0">
-                  <span className="text-xs font-extrabold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/20">
+                <div className="flex items-center justify-end gap-1.5 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-900">
+                  <span className="text-xs font-extrabold px-2 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/20">
                     +{event.xpAwarded || 20} XP
                   </span>
 
                   <button
                     onClick={() => handleSkipEvent(event)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
+                    className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
                     title={event.isSkipped ? 'Unskip' : 'Skip'}
+                    aria-label="Skip event"
                   >
                     <SkipForward className="w-4 h-4" />
                   </button>
 
                   <button
                     onClick={() => handleOpenEditModal(event)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                     title="Edit block"
+                    aria-label="Edit event"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
 
                   <button
                     onClick={() => handleDeleteEvent(event.id)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                    className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
                     title="Delete block"
+                    aria-label="Delete event"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
