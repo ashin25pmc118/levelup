@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo & Theme Brand System — Level Up Life OS</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      box-sizing: border-box;
+      --bg: #030712;
+      --card-bg: #090d16;
+      --card-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #06b6d4;
+      --accent-glow: rgba(6, 182, 212, 0.25);
+    }
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.25s ease;
+    }
+
+    .container {
+      max-width: 860px;
+      width: 100%;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .nav-link {
+      padding: 8px 14px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--card-border);
+      transition: all 0.15s ease;
+    }
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 900;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.5px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 32px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-logos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .logo-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.2s ease;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .logo-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+
+    .logo-icon-wrap {
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+    }
+
+    .logo-desc {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin: 0 0 14px 0;
+    }
+
+    .pill-tag {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+    }
+
+    /* THEME PREVIEW SECTION */
+    .grid-themes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .theme-card-btn {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+
+    .theme-card-btn:hover, .theme-card-btn.active {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .color-swatch-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* PREVIEW MOCKUP */
+    .mockup-frame {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+      margin-top: 16px;
+      transition: all 0.25s ease;
+    }
+
+    .mockup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .mockup-app-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mockup-widget {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .btn-mock {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #000000;
+      font-weight: 800;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* Theme-specific styles applied dynamically */
+    body[data-active-theme="monochrome"] {
+      --bg: #000000;
+      --card-bg: #080808;
+      --card-border: rgba(255, 255, 255, 0.22);
+      --text: #ffffff;
+      --muted: #a1a1aa;
+      --accent: #ffffff;
+      --accent-glow: rgba(255, 255, 255, 0.25);
+      background-image: 
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.14) 1px, transparent 0),
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 20px 20px, 40px 40px, 40px 40px;
+    }
+
+    body[data-active-theme="crimson"] {
+      --bg: #050305;
+      --card-bg: #120709;
+      --card-border: #3b1118;
+      --text: #fff1f2;
+      --muted: #f43f5e;
+      --accent: #fb7185;
+      --accent-glow: rgba(251, 113, 133, 0.3);
+      background-image: none;
+    }
+
+    body[data-active-theme="emerald"] {
+      --bg: #02120e;
+      --card-bg: #04241b;
+      --card-border: #064e3b;
+      --text: #ecfdf5;
+      --muted: #6ee7b7;
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.3);
+      background-image: none;
+    }
+
+    body[data-active-theme="amber"] {
+      --bg: #0a0802;
+      --card-bg: #1a1405;
+      --card-border: #453205;
+      --text: #fefce8;
+      --muted: #fde047;
+      --accent: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.3);
+      background-image: none;
+    }
+
+    body[data-active-theme="cyber"] {
+      --bg: #030712;
+      --card-bg: #0f172a;
+      --card-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #06b6d4;
+      --accent-glow: rgba(6, 182, 212, 0.3);
+      background-image: none;
+    }
+  </style>
+</head>
+<body data-active-theme="monochrome">
+  <div class="container">
+    <header>
+      <div>
+        <h1>Brand Identity & Theme Studio</h1>
+        <span style="font-size: 13px; color: var(--muted);">
+          Curated Logo Concepts & Theme Combinations for <strong>Level Up Life OS</strong>
+        </span>
+      </div>
+      <a href="/" class="nav-link">&larr; Back to App</a>
+    </header>
+
+    <!-- 1. LOGO CONCEPTS SECTION -->
+    <h2 class="section-title">
+      <span>1. Distinctive Logo Concepts (Vector SVG)</span>
+    </h2>
+    <p style="font-size: 13px; color: var(--muted); margin-top: -8px; margin-bottom: 18px;">
+      Click any logo below to preview it instantly inside the real app mockup.
+    </p>
+
+    <div class="grid-logos">
+      <!-- CONCEPT 1 -->
+      <div class="logo-card" onclick="selectLogo('apex', 'The Ascendant Apex')">
+        <div class="logo-icon-wrap" id="logoWrap-apex">
+          <!-- Ascendant Apex SVG -->
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" opacity="0.4"/>
+            <path d="M24 13L34 23H27V35H21V23H14L24 13Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="logo-name">1. Ascendant Apex</div>
+        <div class="logo-desc">Hexagonal RPG shield with an upward chevron arrow. Pure momentum and leveling up.</div>
+        <span class="pill-tag">RPG • Momentum</span>
+      </div>
+
+      <!-- CONCEPT 2 -->
+      <div class="logo-card" onclick="selectLogo('monolith', 'The Monolith L-Up')">
+        <div class="logo-icon-wrap" id="logoWrap-monolith">
+          <!-- Monolith L-Up SVG -->
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="10" height="32" rx="2" fill="currentColor"/>
+            <rect x="8" y="30" width="26" height="10" rx="2" fill="currentColor"/>
+            <path d="M26 12L38 12M38 12V24M38 12L24 26" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="logo-name">2. Monolith L-Up</div>
+        <div class="logo-desc">Geometric 'L' fused with a 45° ascendant leap. Minimalist brutalist tech aesthetic.</div>
+        <span class="pill-tag">Brutalist • Clean</span>
+      </div>
+
+      <!-- CONCEPT 3 -->
+      <div class="logo-card" onclick="selectLogo('core', 'The Quantum Spark')">
+        <div class="logo-icon-wrap" id="logoWrap-core">
+          <!-- Quantum Spark SVG -->
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M26 4L12 26H24L20 44L36 20H24L26 4Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="logo-name">3. Quantum Spark</div>
+        <div class="logo-desc">Sharp multifaceted lightning bolt. High energy, calisthenics power, and focus.</div>
+        <span class="pill-tag">Athletic • Energy</span>
+      </div>
+
+      <!-- CONCEPT 4 -->
+      <div class="logo-card" onclick="selectLogo('loop', 'The Kaizen Horizon')">
+        <div class="logo-icon-wrap" id="logoWrap-loop">
+          <!-- Kaizen Horizon SVG -->
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="3" stroke-dasharray="80 30" stroke-linecap="round"/>
+            <path d="M16 24L22 30L34 18" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="logo-name">4. Kaizen Horizon</div>
+        <div class="logo-desc">Active progress ring with completed quest mark. Represents 1% daily compound growth.</div>
+        <span class="pill-tag">Habits • Discipline</span>
+      </div>
+    </div>
+
+    <!-- 2. THEME SUGGESTIONS SECTION -->
+    <h2 class="section-title">
+      <span>2. Curated Website Theme Combinations</span>
+    </h2>
+    <p style="font-size: 13px; color: var(--muted); margin-top: -8px; margin-bottom: 18px;">
+      Click any theme below to apply it dynamically to this entire page and the live interactive mockup.
+    </p>
+
+    <div class="grid-themes">
+      <!-- THEME 1 -->
+      <div class="theme-card-btn active" onclick="applyTheme('monochrome', this)">
+        <div class="color-swatch-row">
+          <div class="swatch" style="background: #000000;"></div>
+          <div class="swatch" style="background: #ffffff;"></div>
+          <div class="swatch" style="background: #71717a;"></div>
+        </div>
+        <strong style="font-size: 12px;">Black & White Noir</strong>
+        <span style="font-size: 10px; color: var(--muted);">Dot-Grid • High Contrast</span>
+      </div>
+
+      <!-- THEME 2 -->
+      <div class="theme-card-btn" onclick="applyTheme('crimson', this)">
+        <div class="color-swatch-row">
+          <div class="swatch" style="background: #050305;"></div>
+          <div class="swatch" style="background: #fb7185;"></div>
+          <div class="swatch" style="background: #e11d48;"></div>
+        </div>
+        <strong style="font-size: 12px;">Crimson Forge</strong>
+        <span style="font-size: 10px; color: var(--muted);">Obsidian • Ember Rage</span>
+      </div>
+
+      <!-- THEME 3 -->
+      <div class="theme-card-btn" onclick="applyTheme('emerald', this)">
+        <div class="color-swatch-row">
+          <div class="swatch" style="background: #02120e;"></div>
+          <div class="swatch" style="background: #10b981;"></div>
+          <div class="swatch" style="background: #6ee7b7;"></div>
+        </div>
+        <strong style="font-size: 12px;">Emerald Zen</strong>
+        <span style="font-size: 10px; color: var(--muted);">Deep Pine • Low Eye Strain</span>
+      </div>
+
+      <!-- THEME 4 -->
+      <div class="theme-card-btn" onclick="applyTheme('amber', this)">
+        <div class="color-swatch-row">
+          <div class="swatch" style="background: #0a0802;"></div>
+          <div class="swatch" style="background: #f59e0b;"></div>
+          <div class="swatch" style="background: #fbbf24;"></div>
+        </div>
+        <strong style="font-size: 12px;">Solar Horizon</strong>
+        <span style="font-size: 10px; color: var(--muted);">Warm Gold • High Agency</span>
+      </div>
+
+      <!-- THEME 5 -->
+      <div class="theme-card-btn" onclick="applyTheme('cyber', this)">
+        <div class="color-swatch-row">
+          <div class="swatch" style="background: #030712;"></div>
+          <div class="swatch" style="background: #06b6d4;"></div>
+          <div class="swatch" style="background: #a855f7;"></div>
+        </div>
+        <strong style="font-size: 12px;">Cyber Slate</strong>
+        <span style="font-size: 10px; color: var(--muted);">Neon Cyan • RPG Sci-Fi</span>
+      </div>
+    </div>
+
+    <!-- 3. LIVE INTERACTIVE APP MOCKUP -->
+    <div class="mockup-frame">
+      <div class="mockup-header">
+        <div class="mockup-app-brand">
+          <div id="mockupLogoIcon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 8px;">
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" stroke="currentColor" stroke-width="3" opacity="0.4"/>
+              <path d="M24 13L34 23H27V35H21V23H14L24 13Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-weight: 900; font-size: 14px;">LEVEL UP LIFE OS</div>
+            <div style="font-size: 10px; color: var(--muted);" id="mockupSelectedName">Selected: 1. Ascendant Apex</div>
+          </div>
+        </div>
+        <span class="pill-tag" style="border-color: var(--accent); color: var(--accent);">LVL 4 HERO</span>
+      </div>
+
+      <!-- Exact What to do now widget preview -->
+      <div class="mockup-widget">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--accent);">&#9201; What to do now?</span>
+          <span class="pill-tag">CURRENT</span>
+        </div>
+        <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Plan Tomorrow + Prepare Study Materials</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted);">
+          <span>21:45 - 22:15</span>
+          <span style="font-family: monospace; font-weight: 800; color: var(--accent);" id="mockupLiveCountdown">&#9203; 4 min 10sec left</span>
+        </div>
+        <div style="height: 6px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 9999px; overflow: hidden; margin: 10px 0;">
+          <div style="height: 100%; width: 75%; background: var(--accent); border-radius: 9999px;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+          <span style="color: var(--accent); font-weight: 700;">+15 XP on completion</span>
+          <span style="color: var(--muted);">26m 50s elapsed</span>
+        </div>
+        <button class="btn-mock">&#128293; Launch Deep Focus &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Instructions on how to pick or delete -->
+    <div style="margin-top: 24px; padding: 18px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px dashed var(--card-border); font-size: 12px; line-height: 1.6;">
+      <strong>How to pick your favorite logo & theme:</strong>
+      <ol style="margin: 8px 0 0 16px; padding: 0;">
+        <li>Tell me which logo you like best: <strong>Ascendant Apex</strong>, <strong>Monolith L-Up</strong>, <strong>Quantum Spark</strong>, or <strong>Kaizen Horizon</strong>. I will set it as the official app icon and favicon.</li>
+        <li>Tell me if you want any of the themes (e.g. <em>Crimson Forge</em> or <em>Emerald Zen</em>) added to the app alongside the <em>Black & White</em> theme.</li>
+        <li>If you dislike any theme, simply say <strong>"delete theme"</strong> and it will be removed!</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    // Live ticking countdown
+    let sec = 250;
+    setInterval(() => {
+      if (sec > 0) sec--; else sec = 250;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      const el = document.getElementById('mockupLiveCountdown');
+      if (el) el.innerText = `⏳ ${m} min ${s < 10 ? '0' : ''}${s}sec left`;
+    }, 1000);
+
+    // Theme Switcher
+    function applyTheme(themeKey, btn) {
+      document.body.setAttribute('data-active-theme', themeKey);
+      document.querySelectorAll('.theme-card-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    // Logo Selector
+    const logos = {
+      apex: `<svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" stroke="currentColor" stroke-width="3" opacity="0.4"/>
+        <path d="M24 13L34 23H27V35H21V23H14L24 13Z" fill="currentColor"/>
+      </svg>`,
+      monolith: `<svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="10" height="32" rx="2" fill="currentColor"/>
+        <rect x="8" y="30" width="26" height="10" rx="2" fill="currentColor"/>
+        <path d="M26 12L38 12M38 12V24M38 12L24 26" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`,
+      core: `<svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M26 4L12 26H24L20 44L36 20H24L26 4Z" fill="currentColor"/>
+      </svg>`,
+      loop: `<svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="3" stroke-dasharray="80 30" stroke-linecap="round"/>
+        <path d="M16 24L22 30L34 18" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+    };
+
+    function selectLogo(key, name) {
+      const container = document.getElementById('mockupLogoIcon');
+      if (container && logos[key]) {
+        container.innerHTML = logos[key];
+      }
+      const label = document.getElementById('mockupSelectedName');
+      if (label) label.innerText = `Selected: ${name}`;
+    }
+  </script>
+</body>
+</html>
