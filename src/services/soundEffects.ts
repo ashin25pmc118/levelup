@@ -314,6 +314,19 @@ class SoundEngine {
   public getAmbientType() {
     return this.currentAmbientType;
   }
+
+  public initAudio() {
+    this.getContext();
+  }
 }
 
 export const sounds = new SoundEngine();
+
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    sounds.initAudio();
+  };
+  window.addEventListener('click', unlockAudio, { once: true });
+  window.addEventListener('touchstart', unlockAudio, { once: true });
+  window.addEventListener('keydown', unlockAudio, { once: true });
+}

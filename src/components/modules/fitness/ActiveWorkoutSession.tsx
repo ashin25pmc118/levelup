@@ -107,6 +107,27 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
     }
   }, [currentExIndex]);
 
+  // Screen Wake Lock API (keeps mobile/tablet display awake during active sets & isometric holds)
+  useEffect(() => {
+    let wakeLockSentinel: any = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch {
+        // Graceful fallback if unsupported
+      }
+    };
+    requestWakeLock();
+
+    return () => {
+      if (wakeLockSentinel && typeof wakeLockSentinel.release === 'function') {
+        wakeLockSentinel.release().catch(() => {});
+      }
+    };
+  }, []);
+
   // Overall workout elapsed stopwatch
   useEffect(() => {
     if (isWorkoutCompleted) return;
