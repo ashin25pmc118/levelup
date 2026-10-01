@@ -55,6 +55,21 @@ const formatMinutes = (totalMins: number): string => {
   return `${h}h ${m}m`;
 };
 
+// Format remaining seconds into precise countdown (e.g. "4 min 10sec left")
+const formatPreciseCountdown = (totalSeconds: number, suffix: string = ' left'): string => {
+  if (totalSeconds <= 0) return `0sec${suffix}`;
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${mins} min ${secs}sec${suffix}`;
+  }
+  if (mins > 0) {
+    return `${mins} min ${secs}sec${suffix}`;
+  }
+  return `${secs}sec${suffix}`;
+};
+
 // Calculate suggested XP based on block duration
 const calculateSuggestedXp = (start: string, end: string): number => {
   const durationMins = Math.max(15, toMinutes(end) - toMinutes(start));
@@ -78,19 +93,18 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const isToday = selectedDate === todayStr;
 
-  // Real-time device clock (updated every 15s)
-  const [currentTime, setCurrentTime] = useState<string>(() => {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  });
+  // Real-time device clock (updated every 1s for live second-accurate countdowns)
+  const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const d = new Date();
-      setCurrentTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
-    }, 15000);
+      setNow(new Date());
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const nowTotalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
   // Filter state (all | pending | completed)
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
@@ -255,11 +269,20 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
     ? currentEvents.find(e => toMinutes(e.startTime) > nowMins && !e.isCompleted && !e.isSkipped)
     : null;
 
-  // Calculations for active event progress
-  const activeDuration = activeEvent ? Math.max(1, toMinutes(activeEvent.endTime) - toMinutes(activeEvent.startTime)) : 0;
-  const activeElapsed = activeEvent ? Math.max(0, nowMins - toMinutes(activeEvent.startTime)) : 0;
-  const activeRemaining = activeEvent ? Math.max(0, toMinutes(activeEvent.endTime) - nowMins) : 0;
-  const activeProgress = activeEvent ? Math.min(100, Math.round((activeElapsed / activeDuration) * 100)) : 0;
+  // Calculations for active event progress (second-accurate)
+  const activeStartSec = activeEvent ? toMinutes(activeEvent.startTime) * 60 : 0;
+  const activeEndSec = activeEvent ? toMinutes(activeEvent.endTime) * 60 : 0;
+  const activeDurationSec = activeEvent ? Math.max(1, activeEndSec - activeStartSec) : 0;
+  const activeElapsedSec = activeEvent ? Math.max(0, nowTotalSeconds - activeStartSec) : 0;
+  const activeRemainingSec = activeEvent ? Math.max(0, activeEndSec - nowTotalSeconds) : 0;
+  const activeProgress = activeEvent ? Math.min(100, Math.round((activeElapsedSec / activeDurationSec) * 100)) : 0;
+
+  const activeElapsedMins = Math.floor(activeElapsedSec / 60);
+  const activeElapsedRemSec = activeElapsedSec % 60;
+  const activeDurationMins = Math.max(1, Math.round(activeDurationSec / 60));
+
+  // Time until upcoming event (seconds)
+  const secUntilUpcoming = upcomingEvent ? Math.max(0, toMinutes(upcomingEvent.startTime) * 60 - nowTotalSeconds) : 0;
 
   // Schedule Time Analytics
   const totalPlannedMinutes = currentEvents.reduce((acc, e) => acc + Math.max(0, toMinutes(e.endTime) - toMinutes(e.startTime)), 0);
@@ -319,7 +342,7 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
 
             <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
               <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{activeRemaining} mins remaining</span>
+              <span className="font-mono text-cyan-300 font-extrabold">{formatPreciseCountdown(activeRemainingSec)}</span>
             </div>
           </div>
 
@@ -381,9 +404,9 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
               />
             </div>
             <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-              <span>{activeElapsed}m elapsed</span>
+              <span>{activeElapsedMins}m {activeElapsedRemSec}s elapsed</span>
               <span>{activeProgress}% complete</span>
-              <span>{formatMinutes(activeDuration)} total</span>
+              <span>{formatMinutes(activeDurationMins)} total</span>
             </div>
           </div>
         </div>
@@ -395,7 +418,7 @@ export const TimetableModule: React.FC<TimetableModuleProps> = ({
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
             <span>
-              <strong>Next Up:</strong> {upcomingEvent.title} at {upcomingEvent.startTime} (in {toMinutes(upcomingEvent.startTime) - nowMins} mins)
+              <strong>Next Up:</strong> {upcomingEvent.title} at {upcomingEvent.startTime} (starts in <span className="font-mono text-cyan-400 font-bold">{formatPreciseCountdown(secUntilUpcoming, '')}</span>)
             </span>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold uppercase">
