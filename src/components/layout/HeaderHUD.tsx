@@ -77,17 +77,41 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
     }
   };
 
+  const [themeToast, setThemeToast] = useState<string | null>(null);
+
+  const THEME_NAMES: Record<AppSettings['theme'], string> = {
+    'cyber-slate': 'Cyber Slate (Dark)',
+    'clean-light': 'Clean Light (Day Mode)',
+    'midnight-abyss': 'Midnight Abyss (OLED)',
+    'monochrome-pattern': 'Monochrome (B&W)'
+  };
+
   const handleCycleTheme = () => {
     sounds.playClick();
-    const themes: AppSettings['theme'][] = ['cyber-slate', 'midnight-abyss', 'clean-light', 'monochrome-pattern'];
+    try {
+      if ('vibrate' in navigator) navigator.vibrate(20);
+    } catch {}
+    const themes: AppSettings['theme'][] = ['cyber-slate', 'clean-light', 'midnight-abyss', 'monochrome-pattern'];
     const nextIdx = (themes.indexOf(settings.theme) + 1) % themes.length;
     const nextTheme = themes[nextIdx];
     const updated = { ...settings, theme: nextTheme };
     onUpdateSettings(updated);
+
+    setThemeToast(THEME_NAMES[nextTheme]);
+    setTimeout(() => {
+      setThemeToast(null);
+    }, 1400);
   };
 
   return (
     <header className="sticky top-0 z-30 w-full border-b backdrop-blur-md bg-slate-950/85 border-slate-800/80 px-3 sm:px-6 py-2.5">
+      {/* 1-Click Instant Theme Toast Notification */}
+      {themeToast && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-3.5 py-1.5 rounded-full bg-slate-900/95 border-2 border-cyan-400 text-white font-black text-xs shadow-xl shadow-cyan-500/30 backdrop-blur-md flex items-center gap-1.5 animate-in slide-in-from-top-2 fade-in duration-150 pointer-events-none">
+          <Palette className="w-3.5 h-3.5 text-cyan-400" />
+          <span>{themeToast}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
         {/* Left: Level & Character Info */}
         <div 
@@ -184,11 +208,11 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               <span className="hidden md:inline">Note</span>
             </button>
 
-            {/* Theme Picker Trigger */}
+            {/* 1-Click Theme Switcher (No List) */}
             <button
-              onClick={openThemePicker}
+              onClick={handleCycleTheme}
               className="p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-colors"
-              title={`Current Theme: ${settings.theme} (Click to open theme picker)`}
+              title={`Current Theme: ${settings.theme} (1-Click to toggle)`}
             >
               {settings.theme === 'clean-light' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -266,12 +290,12 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               </span>
             </div>
 
-            {/* Permanent 1-Tap Mobile Theme Selector Button */}
+            {/* Permanent 1-Click Mobile Theme Selector Button (Instant - No List) */}
             <button
-              onClick={openThemePicker}
+              onClick={handleCycleTheme}
               className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-slate-800 bg-slate-900/90 text-slate-200 hover:text-cyan-300 active:scale-95 transition-all flex items-center justify-center shrink-0 shadow-sm"
-              title={`Current Theme: ${settings.theme} (Tap to change theme)`}
-              aria-label="Open Theme Selector"
+              title={`Current Theme: ${settings.theme} (1-Click instant change)`}
+              aria-label="1-Click Theme Change"
             >
               {settings.theme === 'clean-light' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -378,11 +402,10 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 </div>
               </button>
 
-              {/* Theme Picker Trigger */}
+              {/* 1-Click Theme Cycle */}
               <button
                 onClick={() => {
-                  setIsMobileUtilityOpen(false);
-                  openThemePicker();
+                  handleCycleTheme();
                 }}
                 className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-left active:scale-[0.98] transition-all min-h-[56px]"
               >
@@ -398,8 +421,8 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                   )}
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-white block">Theme & Colors</span>
-                  <span className="text-[10px] text-slate-400 capitalize">{settings.theme.replace('-', ' ')}</span>
+                  <span className="text-xs font-bold text-white block">Theme Mode</span>
+                  <span className="text-[10px] text-slate-400 capitalize">{settings.theme.replace('-', ' ')} · 1-Tap Toggle</span>
                 </div>
               </button>
 
@@ -436,20 +459,21 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               </div>
             </div>
 
-            {/* Player Profile Card Button */}
-            {onOpenPlayerCard && (
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setIsMobileUtilityOpen(false);
-                  onOpenPlayerCard();
-                }}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-lg shadow-cyan-500/20 active:scale-[0.98] transition-all"
-              >
-                <span>View Full Hunter Identity Card</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
+            {/* System Config & Settings Hub Button (No redundant Hunter Card here) */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setIsMobileUtilityOpen(false);
+                onNavigate('settings');
+              }}
+              className="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider flex items-center justify-between border border-slate-700 shadow-sm active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-cyan-400" />
+                <span>Open System Settings & Database</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
           </div>
         </div>
       )}
