@@ -473,6 +473,26 @@ class SmartwatchService {
   }
 
   /**
+   * Set a manual biometric reading directly from watch face
+   * For watches with closed proprietary Bluetooth encryption
+   */
+  public setManualReading(bpm: number, spO2: number = 98) {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const newHistory = [...this.state.history, { time, bpm, spO2 }].slice(-40);
+    this.updateState({
+      connected: true,
+      deviceName: 'Watch Face Reading',
+      heartRate: bpm,
+      spO2: spO2,
+      lastUpdated: time,
+      history: newHistory,
+      error: null
+    });
+    if (this.onHeartRateChange) this.onHeartRateChange(bpm);
+    if (this.onSpO2Change) this.onSpO2Change(spO2);
+  }
+
+  /**
    * Stop Built-in Biometrics Simulator
    */
   public stopSimulator() {

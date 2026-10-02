@@ -87,6 +87,8 @@ export const SmartwatchSyncModal: React.FC<SmartwatchSyncModalProps> = ({
 }) => {
   const [swState, setSwState] = useState<SmartwatchConnectionState>(smartwatch.state);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [manualBpm, setManualBpm] = useState<number>(() => smartwatch.state.heartRate || 75);
+  const [manualSpo2, setManualSpo2] = useState<number>(() => smartwatch.state.spO2 || 98);
 
   // Daily Step Tracker
   const todayKey = new Date().toISOString().split('T')[0];
@@ -491,7 +493,66 @@ export const SmartwatchSyncModal: React.FC<SmartwatchSyncModalProps> = ({
           )}
         </div>
 
-        {/* 4. DAILY STEP TRACKER & XP CONVERTER */}
+        {/* 4. DIRECT WATCH FACE READING SYNC (FOR PHONES & CLOSED WATCH CHIPSETS) */}
+        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-rose-400" /> Direct Watch Face Reading Sync
+            </span>
+            <span className="text-[10px] text-cyan-400 font-bold">
+              Instant RPG Live Pulse
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            If your watch uses closed app encryption, glance at your watch screen and enter your current BPM &amp; SpO2 here to activate full RPG Cardio perks, animated EKG, and the HUD pill!
+          </p>
+
+          <div className="flex items-center gap-3 flex-wrap pt-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-400 uppercase">Heart Rate:</span>
+              <input
+                type="number"
+                min="40"
+                max="220"
+                value={manualBpm || ''}
+                placeholder="e.g. 84"
+                onChange={(e) => setManualBpm(parseInt(e.target.value, 10) || 0)}
+                className="w-20 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs font-bold focus:outline-none focus:border-rose-400"
+              />
+              <span className="text-[10px] text-slate-400 font-bold uppercase">BPM</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-400 uppercase">SpO2:</span>
+              <input
+                type="number"
+                min="70"
+                max="100"
+                value={manualSpo2 || ''}
+                placeholder="e.g. 98"
+                onChange={(e) => setManualSpo2(parseInt(e.target.value, 10) || 0)}
+                className="w-20 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs font-bold focus:outline-none focus:border-cyan-400"
+              />
+              <span className="text-[10px] text-slate-400 font-bold">%</span>
+            </div>
+
+            <button
+              onClick={() => {
+                if (manualBpm > 30) {
+                  sounds.playQuestComplete();
+                  smartwatch.setManualReading(manualBpm, manualSpo2 || 98);
+                }
+              }}
+              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <Heart className="w-3.5 h-3.5 fill-current" />
+              <span>Apply Reading to HUD</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 5. DAILY STEP TRACKER & XP CONVERTER */}
         <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
