@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Volume2,
   VolumeX,
@@ -10,17 +10,14 @@ import {
   Moon,
   Palette,
   Contrast,
-  Watch,
   SlidersHorizontal,
   X,
-  Heart,
   ChevronRight,
   FileText
 } from 'lucide-react';
 import { UserProfile, AppSettings } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
-import { smartwatch } from '../../services/smartwatchService';
 import { BrandLogo } from '../common/BrandLogo';
 import { ThemePickerModal } from '../common/ThemePickerModal';
 
@@ -31,7 +28,6 @@ interface HeaderHUDProps {
   onOpenQuickNote: () => void;
   onNavigate: (tab: string) => void;
   onOpenPlayerCard?: () => void;
-  onOpenSmartwatch?: () => void;
   onOpenThemePicker?: () => void;
 }
 
@@ -42,10 +38,8 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   onOpenQuickNote,
   onNavigate,
   onOpenPlayerCard,
-  onOpenSmartwatch,
   onOpenThemePicker
 }) => {
-  const [swState, setSwState] = useState(smartwatch.state);
   const [isMobileUtilityOpen, setIsMobileUtilityOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
@@ -57,12 +51,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
       setIsThemeModalOpen(true);
     }
   };
-
-  useEffect(() => {
-    smartwatch.setStatusListener(state => {
-      setSwState({ ...state });
-    });
-  }, []);
   const reqXP = getRequiredXPForLevel(profile.level);
   const xpPercent = Math.min(100, Math.round((profile.currentXP / reqXP) * 100));
   const { rank } = getRankTier(profile.level);
@@ -225,42 +213,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               )}
             </button>
 
-            {/* Smartwatch / Health Sync Button */}
-            {onOpenSmartwatch && (
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  onOpenSmartwatch();
-                }}
-                className={`p-2 rounded-lg border transition-all flex items-center gap-1.5 ${
-                  swState.connected
-                    ? 'bg-rose-950/70 border-rose-500/50 text-rose-300 shadow-sm shadow-rose-950/50'
-                    : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-cyan-300 hover:border-cyan-500/40'
-                }`}
-                title={
-                  swState.connected
-                    ? `${swState.deviceName || 'Smartwatch'}: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} ${swState.spO2 ? '· ' + swState.spO2 + '% SpO2' : ''}`
-                    : 'Smartwatch Direct Biometrics & Step Sync (Zero Google Connect)'
-                }
-              >
-                {swState.connected && swState.heartRate ? (
-                  <>
-                    <Heart className="w-4 h-4 fill-rose-500 text-rose-400 animate-pulse" />
-                    <span className="text-[11px] font-mono font-black text-rose-300">
-                      {swState.heartRate} <span className="text-[9px] text-rose-400/80">BPM</span>
-                    </span>
-                    {swState.spO2 && (
-                      <span className="text-[10px] text-cyan-300 font-mono hidden lg:inline pl-1 border-l border-rose-800/60">
-                        {swState.spO2}%
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <Watch className="w-4 h-4" />
-                )}
-              </button>
-            )}
-
             {/* Audio Toggle */}
             <button
               onClick={toggleSound}
@@ -299,21 +251,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               </span>
             </div>
 
-            {/* Live Smartwatch Biometrics Pill (Mobile - When Connected) */}
-            {swState.connected && swState.heartRate && (
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  if (onOpenSmartwatch) onOpenSmartwatch();
-                }}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-black shrink-0 active:scale-95 transition-all shadow-sm"
-                title={`Live Watch: ${swState.heartRate} BPM ${swState.spO2 ? '· ' + swState.spO2 + '% SpO2' : ''}`}
-              >
-                <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-400 animate-pulse" />
-                <span className="font-mono">{swState.heartRate}</span>
-              </button>
-            )}
-
             {/* Permanent 1-Click Mobile Theme Selector Button (Instant - No List) */}
             <button
               onClick={handleCycleTheme}
@@ -332,24 +269,17 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               )}
             </button>
 
-            {/* Mobile Quick Utilities Trigger (Watch, Audio, Quick Note) */}
+            {/* Mobile Quick Utilities Trigger */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setIsMobileUtilityOpen(true);
               }}
-              className={`p-2 min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center transition-all active:scale-95 relative shrink-0 ${
-                swState.connected
-                  ? 'bg-rose-950/80 border-rose-500/60 text-rose-300 shadow-sm shadow-rose-500/20'
-                  : 'bg-slate-900 border-slate-800 text-slate-200 hover:text-cyan-300'
-              }`}
+              className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-slate-800 bg-slate-900 text-slate-200 hover:text-cyan-300 flex items-center justify-center transition-all active:scale-95 shrink-0"
               aria-label="Open Mobile Quick Utilities"
               title="Quick Settings & Utilities"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              {swState.connected && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-              )}
             </button>
           </div>
         </div>
@@ -400,31 +330,21 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 </div>
               </button>
 
-              {/* Smartwatch Sync */}
+              {/* Visual Theme Picker Modal Trigger */}
               <button
                 onClick={() => {
                   sounds.playClick();
                   setIsMobileUtilityOpen(false);
-                  if (onOpenSmartwatch) onOpenSmartwatch();
+                  openThemePicker();
                 }}
-                className={`flex items-center gap-2.5 p-3 rounded-2xl border text-left active:scale-[0.98] transition-all min-h-[56px] ${
-                  swState.connected
-                    ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-                    : 'bg-slate-950 border-slate-800 text-slate-300'
-                }`}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-left active:scale-[0.98] transition-all min-h-[56px]"
               >
-                <div className={`p-2 rounded-xl shrink-0 ${
-                  swState.connected ? 'bg-rose-950 text-rose-400' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  <Watch className="w-4 h-4" />
+                <div className="p-2 rounded-xl bg-cyan-950 border border-cyan-500/30 text-cyan-400 shrink-0">
+                  <Palette className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-white block">Watch Biometrics</span>
-                  <span className="text-[10px] text-slate-400">
-                    {swState.connected
-                      ? `${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} ${swState.spO2 ? '· ' + swState.spO2 + '%' : ''}`
-                      : 'Direct Bluetooth (No Cloud)'}
-                  </span>
+                  <span className="text-xs font-bold text-white block">Theme Styles</span>
+                  <span className="text-[10px] text-slate-400">Visual Palette Picker</span>
                 </div>
               </button>
 

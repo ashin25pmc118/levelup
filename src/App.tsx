@@ -49,7 +49,6 @@ const CalendarView = lazy(() => import('./components/modules/calendar/CalendarVi
 const SettingsView = lazy(() => import('./components/modules/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 
 // Lazy-loaded System Modals
-const SmartwatchSyncModal = lazy(() => import('./components/common/SmartwatchSyncModal').then(m => ({ default: m.SmartwatchSyncModal })));
 const PlayerStatusCardModal = lazy(() => import('./components/common/PlayerStatusCardModal').then(m => ({ default: m.PlayerStatusCardModal })));
 const QuickNoteModal = lazy(() => import('./components/common/QuickNoteModal').then(m => ({ default: m.QuickNoteModal })));
 const LevelUpModal = lazy(() => import('./components/common/LevelUpModal').then(m => ({ default: m.LevelUpModal })));
@@ -95,7 +94,6 @@ export function App() {
   const [isQuickNoteOpen, setIsQuickNoteOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
-  const [isSmartwatchOpen, setIsSmartwatchOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [toasts, setToasts] = useState<SystemToast[]>([]);
   const [levelUpProfile, setLevelUpProfile] = useState<UserProfile | null>(null);
@@ -259,7 +257,6 @@ export function App() {
         onOpenQuickNote={() => setIsQuickNoteOpen(true)}
         onNavigate={setCurrentTab}
         onOpenPlayerCard={() => setIsPlayerCardOpen(true)}
-        onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
         onOpenThemePicker={() => setIsThemePickerOpen(true)}
       />
 
@@ -285,7 +282,6 @@ export function App() {
                 exercises={exercises}
                 onNavigate={handleNavigate}
                 settings={settings}
-                onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
               />
             )}
 
@@ -438,7 +434,6 @@ export function App() {
         onClose={() => setIsMoreMenuOpen(false)}
         onSelectTab={handleNavigate}
         currentTab={currentTab}
-        onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
         onOpenThemePicker={() => setIsThemePickerOpen(true)}
       />
 
@@ -455,15 +450,6 @@ export function App() {
               setSettings(updated);
               storage.saveSettings(updated);
             }}
-          />
-        )}
-
-        {/* Noise Smartwatch & Health Sync Modal */}
-        {isSmartwatchOpen && (
-          <SmartwatchSyncModal
-            isOpen={isSmartwatchOpen}
-            onClose={() => setIsSmartwatchOpen(false)}
-            onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
           />
         )}
 

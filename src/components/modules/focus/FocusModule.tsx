@@ -15,14 +15,12 @@ import {
   Minimize2,
   Volume2,
   VolumeX,
-  Wind,
-  Heart
+  Wind
 } from 'lucide-react';
 import { FocusSession } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
 import { haptics } from '../../../services/hapticFeedback';
-import { smartwatch } from '../../../services/smartwatchService';
 import { GuidedBreathworkModal } from '../../common/GuidedBreathworkModal';
 
 interface FocusModuleProps {
@@ -45,14 +43,6 @@ export const FocusModule: React.FC<FocusModuleProps> = ({ onAwardXP }) => {
 
   // Guided Breathwork modal state
   const [isBreathworkOpen, setIsBreathworkOpen] = useState<boolean>(false);
-
-  // Smartwatch state
-  const [swState, setSwState] = useState(smartwatch.state);
-  useEffect(() => {
-    smartwatch.setStatusListener(st => {
-      setSwState({ ...st });
-    });
-  }, []);
 
   // Ref for accurate background tab timing
   const targetEndTimeRef = useRef<number | null>(null);
@@ -338,28 +328,6 @@ export const FocusModule: React.FC<FocusModuleProps> = ({ onAwardXP }) => {
           </button>
         </div>
       </div>
-
-      {/* Smartwatch Stress & Heart Rate Biofeedback Alert */}
-      {swState.connected && swState.heartRate && swState.heartRate > 95 && (
-        <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-2.5">
-            <Heart className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0 animate-pulse" />
-            <div>
-              <span className="font-bold text-amber-300">Elevated Pulse Detected ({swState.heartRate} BPM):</span>{' '}
-              <span className="text-amber-200/90">Stress or sympathetic arousal detected while resting. Take 2 minutes for Box Breathing.</span>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setIsBreathworkOpen(true);
-            }}
-            className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shrink-0 cursor-pointer shadow-md self-end sm:self-auto"
-          >
-            Start Box Breathing
-          </button>
-        </div>
-      )}
 
       {/* Main Focus Dial Card */}
       <div className="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-slate-900 border border-purple-500/30 shadow-2xl text-center space-y-6">

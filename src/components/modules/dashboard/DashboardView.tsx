@@ -17,7 +17,6 @@ import {
   BookOpen,
   Plus,
   Grid,
-  Watch,
   Trophy,
   Compass,
   Droplets,
@@ -48,7 +47,6 @@ interface DashboardViewProps {
   exercises: Exercise[];
   onNavigate: (tab: string, subTab?: string) => void;
   settings: AppSettings;
-  onOpenSmartwatch?: () => void;
 }
 
 const toSeconds = (timeStr: string): number => {
@@ -79,8 +77,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   todayEvents,
   activeTemplateName,
   confidenceQuest,
-  onNavigate,
-  onOpenSmartwatch
+  onNavigate
 }) => {
   const [xpAnimId, setXpAnimId] = useState<string | null>(null);
   const [isBreathworkOpen, setIsBreathworkOpen] = useState(false);
@@ -355,7 +352,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             { id: 'focus', label: 'Pomodoro', icon: Brain, color: 'text-blue-400', bg: 'bg-blue-950/40 border-blue-500/30', action: () => onNavigate('focus') },
             { id: 'schedule', label: 'Schedule', icon: Calendar, color: 'text-emerald-400', bg: 'bg-emerald-950/40 border-emerald-500/30', action: () => onNavigate('timetable') },
             { id: 'quests', label: 'Quests', icon: CheckCircle2, color: 'text-pink-400', bg: 'bg-pink-950/40 border-pink-500/30', action: () => onNavigate('quests') },
-            { id: 'watch', label: 'Smartwatch', icon: Watch, color: 'text-rose-400', bg: 'bg-rose-950/40 border-rose-500/30', action: () => onOpenSmartwatch ? onOpenSmartwatch() : onNavigate('train', 'today') },
+            { id: 'breath', label: 'Breathwork', icon: Wind, color: 'text-teal-400', bg: 'bg-teal-950/40 border-teal-500/30', action: () => setIsBreathworkOpen(true) },
             { id: 'skills', label: 'Skill Tree', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-950/40 border-yellow-500/30', action: () => onNavigate('train', 'skills') }
           ].map(tile => {
             const Icon = tile.icon;
@@ -956,7 +953,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Quick Action Matrix */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <button
               onClick={() => onNavigate('train')}
               className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
@@ -992,22 +989,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h5 className="text-xs font-bold text-white">Breathwork</h5>
               <p className="text-[10px] text-slate-400 mt-0.5">Box 4-4-4-4 Reset</p>
             </button>
-
-            {onOpenSmartwatch && (
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  onOpenSmartwatch();
-                }}
-                className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
-              >
-                <div className="p-1.5 rounded-xl bg-rose-950/50 text-rose-400 border border-rose-500/30 w-fit mb-1.5 group-hover:scale-110 transition-transform">
-                  <Watch className="w-3.5 h-3.5" />
-                </div>
-                <h5 className="text-xs font-bold text-white">Watch Biometrics</h5>
-                <p className="text-[10px] text-slate-400 mt-0.5">Live Heart Rate & SpO2</p>
-              </button>
-            )}
           </div>
         </div>
       </div>

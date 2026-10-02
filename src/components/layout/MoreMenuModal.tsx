@@ -10,7 +10,6 @@ import {
   Settings,
   Sparkles,
   Trophy,
-  Watch,
   Search,
   Dumbbell,
   Grid,
@@ -25,7 +24,6 @@ interface MoreMenuModalProps {
   onClose: () => void;
   onSelectTab: (tab: string, subTab?: string) => void;
   currentTab: string;
-  onOpenSmartwatch?: () => void;
   onOpenThemePicker?: () => void;
 }
 
@@ -48,7 +46,6 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onClose,
   onSelectTab,
   currentTab,
-  onOpenSmartwatch,
   onOpenThemePicker
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,36 +144,6 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 </button>
               );
             })}
-          </div>
-        )}
-
-        {onOpenSmartwatch && (
-          <div className="mt-4 pt-3 border-t border-slate-800">
-            <button
-              onClick={() => {
-                sounds.playClick();
-                onClose();
-                onOpenSmartwatch();
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-slate-900 to-purple-950/40 border border-cyan-500/30 hover:border-cyan-400 transition-all text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-400">
-                  <Watch className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    Smartwatch Biometrics & Health
-                  </h4>
-                  <p className="text-[10px] text-slate-400">
-                    Live Heart Rate, SpO2 & XP Multiplier (Zero Google Connect)
-                  </p>
-                </div>
-              </div>
-              <span className="text-[10px] px-2 py-1 rounded-lg bg-cyan-500 text-slate-950 font-black uppercase tracking-wider">
-                Live
-              </span>
-            </button>
           </div>
         )}
       </div>
