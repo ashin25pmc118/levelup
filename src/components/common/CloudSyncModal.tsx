@@ -28,9 +28,9 @@ interface CloudSyncModalProps {
   onReloadData?: () => void;
 }
 
-const SQL_SETUP_SCRIPT = `-- 1. Create Cloud Sync Table for LevelUp
+const SQL_SETUP_SCRIPT = `-- 1. Create Cloud Sync Table for LevelUp (Supports Email & Passcode Sync)
 create table if not exists public.user_cloud_sync (
-  user_id uuid references auth.users not null primary key,
+  user_id text primary key,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   data jsonb not null
 );
@@ -38,11 +38,11 @@ create table if not exists public.user_cloud_sync (
 -- 2. Enable Row Level Security (RLS) for Privacy
 alter table public.user_cloud_sync enable row level security;
 
--- 3. Allow Authenticated Users to Access Only Their Own Data
-create policy "Users can manage own sync data"
+-- 3. Allow Access to Sync Row
+create policy "Allow all users to manage sync row"
   on public.user_cloud_sync for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using (true)
+  with check (true);
 `;
 
 export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({ isOpen, onClose, onReloadData }) => {
@@ -51,9 +51,10 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({ isOpen, onClose,
   const [activeTab, setActiveTab] = useState<'sync' | 'auth' | 'setup'>('sync');
 
   // Auth Inputs
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'magic'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'magic' | 'passcode'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passcode, setPasscode] = useState(cloudSync.getPasscode() || '');
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -97,6 +98,19 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({ isOpen, onClose,
     setAuthLoading(true);
     setAuthMessage(null);
     sounds.playClick();
+
+    if (authMode === 'passcode') {
+      const res = await cloudSync.connectWithPasscode(passcode);
+      setAuthLoading(false);
+      if (res.success) {
+        setAuthMessage({ type: 'success', text: res.message });
+        if (onReloadData) onReloadData();
+        setTimeout(() => setActiveTab('sync'), 800);
+      } else {
+        setAuthMessage({ type: 'error', text: res.message });
+      }
+      return;
+    }
 
     if (authMode === 'login') {
       const res = await cloudSync.signIn(email, password);
@@ -345,12 +359,12 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({ isOpen, onClose,
               </div>
             ) : (
               <form onSubmit={handleAuthSubmit} className="space-y-3.5">
-                {/* Sub-tabs for Login vs Signup vs Magic Link */}
-                <div className="flex gap-2">
+                {/* Sub-tabs for Login vs Signup vs Magic Link vs Passcode */}
+                <div className="grid grid-cols-4 gap-1.5">
                   <button
                     type="button"
                     onClick={() => { sounds.playClick(); setAuthMode('login'); }}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold border ${
+                    className={`py-1.5 rounded-xl text-[11px] font-bold border transition-colors ${
                       authMode === 'login' ? 'bg-cyan-950 text-cyan-300 border-cyan-500/40' : 'bg-slate-950 text-slate-400 border-slate-800'
                     }`}
                   >
@@ -359,51 +373,81 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({ isOpen, onClose,
                   <button
                     type="button"
                     onClick={() => { sounds.playClick(); setAuthMode('signup'); }}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold border ${
+                    className={`py-1.5 rounded-xl text-[11px] font-bold border transition-colors ${
                       authMode === 'signup' ? 'bg-cyan-950 text-cyan-300 border-cyan-500/40' : 'bg-slate-950 text-slate-400 border-slate-800'
                     }`}
                   >
-                    Create Account
+                    Register
                   </button>
                   <button
                     type="button"
                     onClick={() => { sounds.playClick(); setAuthMode('magic'); }}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold border ${
+                    className={`py-1.5 rounded-xl text-[11px] font-bold border transition-colors ${
                       authMode === 'magic' ? 'bg-cyan-950 text-cyan-300 border-cyan-500/40' : 'bg-slate-950 text-slate-400 border-slate-800'
                     }`}
                   >
                     Magic Link
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => { sounds.playClick(); setAuthMode('passcode'); }}
+                    className={`py-1.5 rounded-xl text-[11px] font-bold border transition-colors ${
+                      authMode === 'passcode' ? 'bg-purple-950 text-purple-300 border-purple-500/40' : 'bg-slate-950 text-slate-400 border-slate-800'
+                    }`}
+                  >
+                    Passcode
+                  </button>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-slate-400" /> Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                {authMode !== 'magic' && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-slate-400" /> Password
+                {authMode === 'passcode' ? (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-300 block flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-purple-400" /> Secret Sync Passcode / Key
                     </label>
                     <input
-                      type="password"
+                      type="text"
                       required
-                      placeholder="••••••••••••"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      placeholder="e.g. ashin-secret-sync"
+                      value={passcode}
+                      onChange={e => setPasscode(e.target.value)}
+                      className="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-purple-500 font-mono"
                     />
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      No email or password needed! Simply enter the <strong>exact same passcode</strong> on your phone and PC to sync your data.
+                    </p>
                   </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-slate-400" /> Email
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+
+                    {authMode !== 'magic' && (
+                      <div>
+                        <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5 text-slate-400" /> Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          placeholder="••••••••••••"
+                          value={password}
+                          onChange={e => setPassword(e.target.value)}
+                          className="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {authMessage && (
@@ -418,9 +462,17 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({ isOpen, onClose,
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full py-2.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
-                  {authLoading ? 'Processing...' : authMode === 'login' ? 'Log In to Sync' : authMode === 'signup' ? 'Create Account & Push Data' : 'Send Magic Link'}
+                  {authLoading
+                    ? 'Processing...'
+                    : authMode === 'passcode'
+                    ? 'Connect with Passcode'
+                    : authMode === 'login'
+                    ? 'Log In to Sync'
+                    : authMode === 'signup'
+                    ? 'Create Account & Push Data'
+                    : 'Send Magic Link'}
                 </button>
               </form>
             )}

@@ -20,7 +20,8 @@ export interface CloudSyncState {
 
 const STORAGE_KEYS = {
   CONFIG: 'levelup_supabase_config',
-  LAST_SYNC: 'levelup_cloud_last_sync'
+  LAST_SYNC: 'levelup_cloud_last_sync',
+  PASSCODE: 'levelup_cloud_passcode'
 };
 
 class SupabaseSyncService {
@@ -67,19 +68,39 @@ class SupabaseSyncService {
             if (config.autoSync) {
               this.syncWithCloud().catch(() => {});
             }
+          } else {
+            // Check if user is using a secret sync passcode (no email needed)
+            const savedPasscode = localStorage.getItem(STORAGE_KEYS.PASSCODE);
+            if (savedPasscode) {
+              this.state.isAuthenticated = true;
+              this.state.userId = `sync_${savedPasscode}`;
+              this.state.userEmail = `Sync Key: ${savedPasscode}`;
+              this.notify();
+              if (config.autoSync) {
+                this.syncWithCloud().catch(() => {});
+              }
+            }
           }
         });
 
         // Listen for auth state changes
         this.client.auth.onAuthStateChange((_event, session) => {
           if (session?.user) {
+            localStorage.removeItem(STORAGE_KEYS.PASSCODE);
             this.state.isAuthenticated = true;
             this.state.userEmail = session.user.email || null;
             this.state.userId = session.user.id;
           } else {
-            this.state.isAuthenticated = false;
-            this.state.userEmail = null;
-            this.state.userId = null;
+            const savedPasscode = localStorage.getItem(STORAGE_KEYS.PASSCODE);
+            if (savedPasscode) {
+              this.state.isAuthenticated = true;
+              this.state.userId = `sync_${savedPasscode}`;
+              this.state.userEmail = `Sync Key: ${savedPasscode}`;
+            } else {
+              this.state.isAuthenticated = false;
+              this.state.userEmail = null;
+              this.state.userId = null;
+            }
           }
           this.notify();
         });
@@ -223,6 +244,42 @@ class SupabaseSyncService {
     }
   }
 
+  // Authentication: Passcode / Secret Sync Key (No Email Needed)
+  public async connectWithPasscode(passcode: string): Promise<{ success: boolean; message: string }> {
+    if (!this.client) return { success: false, message: 'Supabase client not configured. Set URL and Anon Key first.' };
+    const clean = passcode.trim();
+    if (clean.length < 4) return { success: false, message: 'Sync key must be at least 4 characters.' };
+
+    if (this.client) {
+      try { await this.client.auth.signOut(); } catch {}
+    }
+
+    const userId = `sync_${clean}`;
+    localStorage.setItem(STORAGE_KEYS.PASSCODE, clean);
+    this.state.isAuthenticated = true;
+    this.state.userId = userId;
+    this.state.userEmail = `Sync Key: ${clean}`;
+    this.notify();
+
+    const res = await this.syncWithCloud();
+    return { success: true, message: `Connected via Sync Key! ${res.message}` };
+  }
+
+  public getPasscode(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.PASSCODE);
+  }
+
+  public clearPasscode(): void {
+    localStorage.removeItem(STORAGE_KEYS.PASSCODE);
+    if (this.state.userId?.startsWith('sync_')) {
+      this.state.isAuthenticated = false;
+      this.state.userId = null;
+      this.state.userEmail = null;
+      this.state.status = 'idle';
+      this.notify();
+    }
+  }
+
   // Authentication: Sign Out
   public async signOut(): Promise<void> {
     if (this.client) {
@@ -230,6 +287,7 @@ class SupabaseSyncService {
         await this.client.auth.signOut();
       } catch {}
     }
+    this.clearPasscode();
     this.state.isAuthenticated = false;
     this.state.userEmail = null;
     this.state.userId = null;
