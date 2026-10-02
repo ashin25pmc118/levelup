@@ -295,9 +295,38 @@ class SmartwatchService {
         console.info('Battery service not exposed by watch.');
       }
 
+      // 4. Try to resolve friendly device name from Generic Access (0x1800 -> 0x2A00)
+      try {
+        let gaService: any = null;
+        try {
+          gaService = await server.getPrimaryService('generic_access');
+        } catch {
+          gaService = await server.getPrimaryService(0x1800);
+        }
+        if (gaService) {
+          let nameChar: any = null;
+          try {
+            nameChar = await gaService.getCharacteristic('gap.device_name');
+          } catch {
+            nameChar = await gaService.getCharacteristic(0x2A00);
+          }
+          if (nameChar) {
+            const buf = await nameChar.readValue();
+            const realName = new TextDecoder('utf-8').decode(buf);
+            if (realName && realName.trim()) {
+              this.updateState({ deviceName: realName.trim() });
+            }
+          }
+        }
+      } catch {}
+
+      const hasBiometrics = !!this.hrCharacteristic || !!this.spo2Characteristic;
+
       this.updateState({
         connected: true,
-        error: null,
+        error: hasBiometrics
+          ? null
+          : 'Watch connected! If BPM shows "--", make sure "Broadcast Heart Rate" / "HR Sharing" is turned ON in your watch workout settings.',
         isSimulated: false,
         lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       });
