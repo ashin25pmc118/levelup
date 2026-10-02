@@ -22,6 +22,7 @@ import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
 import { smartwatch } from '../../services/smartwatchService';
 import { BrandLogo } from '../common/BrandLogo';
+import { ThemePickerModal } from '../common/ThemePickerModal';
 
 interface HeaderHUDProps {
   profile: UserProfile;
@@ -31,6 +32,7 @@ interface HeaderHUDProps {
   onNavigate: (tab: string) => void;
   onOpenPlayerCard?: () => void;
   onOpenSmartwatch?: () => void;
+  onOpenThemePicker?: () => void;
 }
 
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({
@@ -40,10 +42,21 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   onOpenQuickNote,
   onNavigate,
   onOpenPlayerCard,
-  onOpenSmartwatch
+  onOpenSmartwatch,
+  onOpenThemePicker
 }) => {
   const [swState, setSwState] = useState(smartwatch.state);
   const [isMobileUtilityOpen, setIsMobileUtilityOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+
+  const openThemePicker = () => {
+    sounds.playClick();
+    if (onOpenThemePicker) {
+      onOpenThemePicker();
+    } else {
+      setIsThemeModalOpen(true);
+    }
+  };
 
   useEffect(() => {
     smartwatch.setStatusListener(state => {
@@ -115,16 +128,16 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
         </div>
 
         {/* Center: XP Progress Bar */}
-        <div className="flex-1 max-w-md mx-2 sm:mx-6">
-          <div className="flex items-center justify-between text-[11px] mb-1 font-semibold">
-            <span className="text-cyan-400 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              <span>{profile.currentXP}</span> / <span>{reqXP} XP</span>
+        <div className="flex-1 max-w-[130px] xs:max-w-xs sm:max-w-md mx-1.5 xs:mx-2 sm:mx-6">
+          <div className="flex items-center justify-between text-[10px] sm:text-[11px] mb-0.5 sm:mb-1 font-semibold">
+            <span className="text-cyan-400 flex items-center gap-1 font-mono">
+              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span className="hidden xs:inline">{profile.currentXP}/</span><span>{reqXP} XP</span>
             </span>
-            <span className="text-slate-400">{xpPercent}%</span>
+            <span className="text-slate-400 font-mono text-[10px] sm:text-[11px]">{xpPercent}%</span>
           </div>
           {/* Bar */}
-          <div className="w-full h-2.5 rounded-full bg-slate-900 border border-slate-800 overflow-hidden relative p-0.5">
+          <div className="w-full h-2 sm:h-2.5 rounded-full bg-slate-900 border border-slate-800 overflow-hidden relative p-0.5">
             <div
               className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 shadow-sm shadow-cyan-500/50 transition-all duration-500 ease-out"
               style={{ width: `${xpPercent}%` }}
@@ -139,19 +152,19 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
             +{profile.todayXP} XP today
           </div>
 
-          {/* Streak Flame (Both Desktop & Mobile) */}
-          <div 
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-950/50 border border-orange-500/40 text-orange-400 text-xs font-black shrink-0"
-            title={`${profile.currentStreak} Day Streak`}
-          >
-            <Flame className="w-4 h-4 fill-orange-500 text-orange-400 animate-pulse" />
-            <span>{profile.currentStreak}</span>
-          </div>
-
           {/* ======================================================== */}
           {/* DESKTOP/TABLET DIRECT CONTROLS (sm: and up) */}
           {/* ======================================================== */}
           <div className="hidden sm:flex items-center gap-1.5 sm:gap-2">
+            {/* Streak Flame */}
+            <div 
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-950/50 border border-orange-500/40 text-orange-400 text-xs font-black shrink-0"
+              title={`${profile.currentStreak} Day Streak`}
+            >
+              <Flame className="w-4 h-4 fill-orange-500 text-orange-400 animate-pulse" />
+              <span>{profile.currentStreak}</span>
+            </div>
+
             {/* Streak Shield Anti-Burnout Protection */}
             <div 
               className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-950/40 border border-blue-500/30 text-blue-300 text-xs font-bold"
@@ -171,11 +184,11 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               <span className="hidden md:inline">Note</span>
             </button>
 
-            {/* Theme Switcher Toggle */}
+            {/* Theme Picker Trigger */}
             <button
-              onClick={handleCycleTheme}
+              onClick={openThemePicker}
               className="p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-colors"
-              title={`Current Theme: ${settings.theme} (Click to switch)`}
+              title={`Current Theme: ${settings.theme} (Click to open theme picker)`}
             >
               {settings.theme === 'clean-light' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
@@ -234,18 +247,53 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
           </div>
 
           {/* ======================================================== */}
-          {/* MOBILE QUICK UTILITY BUTTON (< 640px) */}
+          {/* MOBILE DIRECT CONTROLS (< 640px) */}
           {/* ======================================================== */}
-          <div className="flex sm:hidden items-center gap-1">
+          <div className="flex sm:hidden items-center gap-1.5">
+            {/* Combined Streak & Shield Status Pill */}
+            <div 
+              className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-black shrink-0"
+              title={`${profile.currentStreak} Day Streak · ${shieldsCount} Streak Shield${shieldsCount === 1 ? '' : 's'}`}
+            >
+              <span className="flex items-center gap-0.5 text-orange-400">
+                <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-400" />
+                <span>{profile.currentStreak}</span>
+              </span>
+              <span className="text-slate-600 font-normal">·</span>
+              <span className="flex items-center gap-0.5 text-blue-300">
+                <Shield className={`w-3.5 h-3.5 ${shieldsCount > 0 ? 'fill-blue-400 text-blue-300' : 'text-slate-600'}`} />
+                <span>{shieldsCount}</span>
+              </span>
+            </div>
+
+            {/* Permanent 1-Tap Mobile Theme Selector Button */}
+            <button
+              onClick={openThemePicker}
+              className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-slate-800 bg-slate-900/90 text-slate-200 hover:text-cyan-300 active:scale-95 transition-all flex items-center justify-center shrink-0 shadow-sm"
+              title={`Current Theme: ${settings.theme} (Tap to change theme)`}
+              aria-label="Open Theme Selector"
+            >
+              {settings.theme === 'clean-light' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : settings.theme === 'midnight-abyss' ? (
+                <Moon className="w-4 h-4 text-purple-400" />
+              ) : settings.theme === 'monochrome-pattern' ? (
+                <Contrast className="w-4 h-4 text-white" />
+              ) : (
+                <Palette className="w-4 h-4 text-cyan-400" />
+              )}
+            </button>
+
+            {/* Mobile Quick Utilities Trigger (Watch, Audio, Quick Note) */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setIsMobileUtilityOpen(true);
               }}
-              className={`p-2 min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center transition-all active:scale-95 ${
+              className={`p-2 min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center transition-all active:scale-95 relative shrink-0 ${
                 swState.connected
                   ? 'bg-rose-950/80 border-rose-500/60 text-rose-300 shadow-sm shadow-rose-500/20'
-                  : 'bg-slate-900 border-slate-700/80 text-slate-200 hover:text-cyan-300'
+                  : 'bg-slate-900 border-slate-800 text-slate-200 hover:text-cyan-300'
               }`}
               aria-label="Open Mobile Quick Utilities"
               title="Quick Settings & Utilities"
@@ -330,9 +378,12 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 </div>
               </button>
 
-              {/* Theme Cycler */}
+              {/* Theme Picker Trigger */}
               <button
-                onClick={handleCycleTheme}
+                onClick={() => {
+                  setIsMobileUtilityOpen(false);
+                  openThemePicker();
+                }}
                 className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-left active:scale-[0.98] transition-all min-h-[56px]"
               >
                 <div className="p-2 rounded-xl bg-purple-950 border border-purple-500/30 text-purple-400 shrink-0">
@@ -347,7 +398,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                   )}
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-white block">Theme</span>
+                  <span className="text-xs font-bold text-white block">Theme & Colors</span>
                   <span className="text-[10px] text-slate-400 capitalize">{settings.theme.replace('-', ' ')}</span>
                 </div>
               </button>
@@ -402,6 +453,16 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
           </div>
         </div>
       )}
+
+      {/* Dedicated Visual Theme Picker Bottom Sheet / Modal */}
+      <ThemePickerModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        currentTheme={settings.theme}
+        onSelectTheme={(newTheme) => {
+          onUpdateSettings({ ...settings, theme: newTheme });
+        }}
+      />
     </header>
   );
 };

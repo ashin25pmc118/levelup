@@ -12,11 +12,13 @@ import {
   AlertTriangle,
   Sparkles,
   Shield,
-  Dumbbell
+  Dumbbell,
+  Palette
 } from 'lucide-react';
 import { UserProfile, AppSettings, Exercise } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
+import { THEME_OPTIONS, AppThemeType } from '../../common/ThemePickerModal';
 
 interface SettingsViewProps {
   profile: UserProfile;
@@ -176,6 +178,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (soundEnabled) sounds.playQuestComplete();
   };
 
+  const handleSelectTheme = (newTheme: AppThemeType) => {
+    sounds.playClick();
+    const updated: AppSettings = {
+      ...settings,
+      theme: newTheme
+    };
+    storage.saveSettings(updated);
+    onUpdateSettings(updated);
+    setJsonStatus({ type: 'success', message: `Theme switched to ${newTheme.replace('-', ' ').toUpperCase()}!` });
+  };
+
   const handleResetDefaults = () => {
     if (window.confirm('Reset all progress and restore default initial starter data?')) {
       sounds.playClick();
@@ -194,10 +207,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span className="p-1.5 rounded-lg bg-slate-800 text-cyan-400 border border-slate-700">
               <Settings className="w-4 h-4" />
             </span>
-            <h2 className="text-xl font-black text-white">System Config & JSON Hub</h2>
+            <h2 className="text-xl font-black text-white">System Config & Settings</h2>
           </div>
           <p className="text-xs text-slate-400 max-w-xl">
-            Export, upload, edit custom exercises, modify raw JSON game data, or calibrate audio.
+            Customize themes & appearance, export/upload JSON backups, modify exercises, or calibrate audio.
           </p>
         </div>
       </div>
@@ -219,6 +232,91 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <span>{jsonStatus.message}</span>
         </div>
       )}
+
+      {/* THEME & VISUAL APPEARANCE HUB (CRITICAL USER ACCESSIBILITY) */}
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+              <Palette className="w-4 h-4" />
+            </span>
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <span>Theme & Visual Appearance</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 font-bold border border-cyan-500/20 capitalize">
+                  {settings.theme.replace('-', ' ')} Active
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Choose your preferred interface theme and day/night contrast mode.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {THEME_OPTIONS.map((theme) => {
+            const isSelected = settings.theme === theme.id;
+            const Icon = theme.icon;
+
+            return (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => handleSelectTheme(theme.id)}
+                className={`p-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] relative flex flex-col justify-between min-h-[110px] cursor-pointer group ${
+                  isSelected
+                    ? 'bg-gradient-to-br from-cyan-950/40 via-slate-900 to-purple-950/30 border-cyan-400 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400/50'
+                    : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-7 h-7 rounded-lg flex items-center justify-center border shrink-0 transition-transform group-hover:scale-105"
+                      style={{
+                        backgroundColor: theme.swatches.bg,
+                        borderColor: theme.swatches.border,
+                        color: theme.swatches.accent
+                      }}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">
+                        {theme.name}
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-slate-800/80 text-slate-400 border border-slate-700/60">
+                        {theme.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isSelected && (
+                    <span className="w-5 h-5 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shadow-sm">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-slate-400 leading-snug mb-2 line-clamp-2">
+                  {theme.description}
+                </p>
+
+                <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-800/60">
+                  <span className="text-[9px] text-slate-500 font-mono">Palette:</span>
+                  <div className="flex items-center gap-1">
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-700" style={{ backgroundColor: theme.swatches.bg }} />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-700" style={{ backgroundColor: theme.swatches.border }} />
+                    <span className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: theme.swatches.accent }} />
+                    <span className="w-3.5 h-3.5 rounded-full border border-slate-700" style={{ backgroundColor: theme.swatches.text }} />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* JSON DATA MANAGEMENT & EXERCISE MODIFIER (CRITICAL USER REQUIREMENT) */}
       <div className="p-6 rounded-2xl bg-slate-900 border border-cyan-500/30 shadow-xl space-y-4">

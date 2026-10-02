@@ -30,6 +30,7 @@ import { MoreMenuModal } from './components/layout/MoreMenuModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { ModuleLoadingFallback } from './components/common/ModuleLoadingFallback';
+import { ThemePickerModal } from './components/common/ThemePickerModal';
 
 // Primary Landing Modules (Eager loaded for instant first paint)
 import { DashboardView } from './components/modules/dashboard/DashboardView';
@@ -95,6 +96,7 @@ export function App() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
   const [isSmartwatchOpen, setIsSmartwatchOpen] = useState(false);
+  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [toasts, setToasts] = useState<SystemToast[]>([]);
   const [levelUpProfile, setLevelUpProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !settings.onboardingCompleted);
@@ -258,6 +260,7 @@ export function App() {
         onNavigate={setCurrentTab}
         onOpenPlayerCard={() => setIsPlayerCardOpen(true)}
         onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
+        onOpenThemePicker={() => setIsThemePickerOpen(true)}
       />
 
       <div className="flex flex-1 max-w-7xl w-full mx-auto">
@@ -436,10 +439,25 @@ export function App() {
         onSelectTab={handleNavigate}
         currentTab={currentTab}
         onOpenSmartwatch={() => setIsSmartwatchOpen(true)}
+        onOpenThemePicker={() => setIsThemePickerOpen(true)}
       />
 
       {/* Lazy-loaded Modals */}
       <Suspense fallback={null}>
+        {/* Universal Theme Picker Modal */}
+        {isThemePickerOpen && (
+          <ThemePickerModal
+            isOpen={isThemePickerOpen}
+            onClose={() => setIsThemePickerOpen(false)}
+            currentTheme={settings.theme}
+            onSelectTheme={t => {
+              const updated = { ...settings, theme: t };
+              setSettings(updated);
+              storage.saveSettings(updated);
+            }}
+          />
+        )}
+
         {/* Noise Smartwatch & Health Sync Modal */}
         {isSmartwatchOpen && (
           <SmartwatchSyncModal

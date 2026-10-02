@@ -384,13 +384,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 🚀 PRIMARY "NEXT ACTION" HERO CARD (Progressive Disclosure) */}
       <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 border-2 border-cyan-500/40 shadow-xl shadow-cyan-950/25 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5 max-w-xl">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider border ${primaryNextAction.badgeColor}`}>
               {primaryNextAction.badge}
             </span>
             <span className="text-xs font-mono font-bold text-amber-300">
               {primaryNextAction.xp}
             </span>
+            {currentEvent && (() => {
+              const startSec = toSeconds(currentEvent.startTime);
+              let endSec = toSeconds(currentEvent.endTime);
+              if (endSec < startSec) endSec += 86400;
+              let cur = nowTotalSeconds;
+              if (endSec > 86400 && cur < startSec) cur += 86400;
+              const remSec = Math.max(0, endSec - cur);
+              return remSec > 0 ? (
+                <span className="text-[11px] font-bold font-mono text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded-full border border-cyan-500/30">
+                  ⏳ {formatPreciseCountdown(remSec)} left
+                </span>
+              ) : null;
+            })()}
           </div>
           <h2 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
             <primaryNextAction.icon className="w-5 h-5 text-cyan-400 shrink-0" />
@@ -428,24 +441,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             {currentEvent ? (
               <div className="mt-1 space-y-2">
-                <div>
-                  <h4 className="text-sm font-bold text-white line-clamp-1">{currentEvent.title}</h4>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center justify-between gap-2 flex-wrap">
-                    <span>{currentEvent.startTime} - {currentEvent.endTime}</span>
-                    {(() => {
-                      const startSec = toSeconds(currentEvent.startTime);
-                      let endSec = toSeconds(currentEvent.endTime);
-                      if (endSec < startSec) endSec += 86400;
-                      let cur = nowTotalSeconds;
-                      if (endSec > 86400 && cur < startSec) cur += 86400;
-                      const remSec = Math.max(0, endSec - cur);
-                      return (
-                        <span className="text-cyan-300 font-bold font-mono text-[11px] sm:text-xs">
-                          {remSec > 0 ? `⏳ ${formatPreciseCountdown(remSec)}` : 'Ending soon'}
-                        </span>
-                      );
-                    })()}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white">Live Block Progress</span>
+                  <span className="text-[11px] font-bold text-cyan-400 font-mono">
+                    {currentEvent.startTime} – {currentEvent.endTime}
+                  </span>
                 </div>
 
                 {/* Progress bar of current block */}
@@ -459,15 +459,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   const elapsed = Math.max(0, cur - startSec);
                   const pct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
                   return (
-                    <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                      <div className="h-full bg-cyan-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    <div className="space-y-1">
+                      <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                        <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-400">
+                        <span>{pct}% elapsed</span>
+                        <span className="text-cyan-400 font-bold">+{currentEvent.xpAwarded || 20} XP on completion</span>
+                      </div>
                     </div>
                   );
                 })()}
-
-                <div className="text-[11px] font-semibold text-cyan-300">
-                  Reward: +{currentEvent.xpAwarded || 20} XP on completion
-                </div>
               </div>
             ) : (
               <div className="mt-1">
@@ -481,21 +483,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {currentEvent ? (
             <button
               onClick={() => {
-                if (/study|revision|exam|solve|read/i.test(currentEvent.title)) {
-                  onNavigate('focus');
-                } else if (/exercise|stretch|workout|mobility|walk/i.test(currentEvent.title)) {
-                  onNavigate('train');
-                } else {
-                  onNavigate('timetable');
-                }
+                sounds.playClick();
+                onNavigate('timetable');
               }}
-              className="mt-3 w-full py-1.5 px-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center gap-1 border border-cyan-500/30 transition-colors"
+              className="mt-3 w-full py-1.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1 border border-slate-700 transition-colors"
             >
-              {/study|revision|exam|solve|read/i.test(currentEvent.title)
-                ? '🔥 Launch Deep Focus'
-                : /exercise|stretch|workout|mobility|walk/i.test(currentEvent.title)
-                ? '💪 Launch Training'
-                : 'Open Timetable'} <ArrowRight className="w-3 h-3" />
+              <span>View Full Day Schedule</span>
+              <ArrowRight className="w-3 h-3 text-cyan-400" />
             </button>
           ) : (
             <button

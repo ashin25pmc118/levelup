@@ -15,7 +15,8 @@ import {
   Dumbbell,
   Grid,
   Zap,
-  Eye
+  Eye,
+  Palette
 } from 'lucide-react';
 import { sounds } from '../../services/soundEffects';
 
@@ -25,9 +26,11 @@ interface MoreMenuModalProps {
   onSelectTab: (tab: string, subTab?: string) => void;
   currentTab: string;
   onOpenSmartwatch?: () => void;
+  onOpenThemePicker?: () => void;
 }
 
 const ALL_SYSTEM_TOOLS = [
+  { id: 'theme', label: 'Theme & Appearance', desc: 'Cyber, Clean Light, OLED & B&W', icon: Palette, color: 'text-cyan-400', bg: 'bg-cyan-950/40 border-cyan-500/30', keywords: 'theme appearance dark light color clean oled white black background mode' },
   { id: 'focus', label: 'Mind & Focus', desc: 'Pomodoro timer & ambient noise', icon: Brain, color: 'text-purple-400', bg: 'bg-purple-950/40 border-purple-500/30', keywords: 'pomodoro timer study deep work sound binaural rain' },
   { id: 'confidence', label: 'Confidence', desc: 'Social growth comfort ladder', icon: MessageSquare, color: 'text-pink-400', bg: 'bg-pink-950/40 border-pink-500/30', keywords: 'social confidence speaking comfort challenge' },
   { id: 'skills', label: 'Skills', desc: 'Deliberate practice & mastery', icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-950/40 border-emerald-500/30', keywords: 'skills practice coding reading study' },
@@ -45,7 +48,8 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
   onClose,
   onSelectTab,
   currentTab,
-  onOpenSmartwatch
+  onOpenSmartwatch,
+  onOpenThemePicker
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -53,6 +57,11 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
 
   const handleSelect = (tabId: string, subTab?: string) => {
     sounds.playClick();
+    if (tabId === 'theme') {
+      onClose();
+      if (onOpenThemePicker) onOpenThemePicker();
+      return;
+    }
     onSelectTab(tabId, subTab);
     onClose();
   };
