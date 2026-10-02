@@ -4,6 +4,7 @@ import { Sparkles, Trophy, ArrowRight, ShieldCheck } from 'lucide-react';
 import { UserProfile } from '../../types';
 import { getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
+import { BrandLogo } from './BrandLogo';
 
 interface LevelUpModalProps {
   profile: UserProfile;
@@ -47,6 +48,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ profile, onClose }) 
       <div className="relative w-full max-w-md p-6 overflow-hidden text-center border shadow-2xl rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-cyan-500/40 shadow-cyan-500/20">
         {/* Glow ambient background */}
         <div className="absolute top-0 w-48 h-48 -translate-x-1/2 rounded-full -translate-y-1/2 left-1/2 bg-cyan-500/20 blur-3xl pointer-events-none" />
+
+        {/* Level Up Brand Logo */}
+        <div className="flex justify-center mb-3">
+          <BrandLogo size="lg" glow className="shadow-lg shadow-cyan-500/30 animate-pulse" />
+        </div>
 
         {/* Level Up Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 text-xs font-black tracking-widest uppercase rounded-full border border-cyan-400/30 bg-cyan-950/50 text-cyan-300 shadow-inner">

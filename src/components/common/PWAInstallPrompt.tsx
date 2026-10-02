@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { sounds } from '../../services/soundEffects';
 import { haptics } from '../../services/hapticFeedback';
+import { BrandLogo } from './BrandLogo';
 
 export const PWAInstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -40,9 +41,7 @@ export const PWAInstallPrompt: React.FC = () => {
   return (
     <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-40 max-w-sm p-3.5 rounded-2xl bg-slate-900/95 border border-cyan-500/40 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 text-slate-100 animate-in slide-in-from-bottom duration-300">
       <div className="flex items-center gap-2.5">
-        <div className="p-2 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-500/30 shrink-0">
-          <Download className="w-4 h-4" />
-        </div>
+        <BrandLogo size="sm" glow />
         <div>
           <h4 className="text-xs font-bold text-white">Install Level Up App</h4>
           <p className="text-[10px] text-slate-400">Offline mode, fast launch & fullscreen</p>

@@ -17,6 +17,7 @@ import { UserProfile } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { StatRadar } from './StatRadar';
 import { sounds } from '../../services/soundEffects';
+import { BrandLogo } from './BrandLogo';
 
 interface PlayerStatusCardModalProps {
   profile: UserProfile;
@@ -43,10 +44,8 @@ export const PlayerStatusCardModal: React.FC<PlayerStatusCardModalProps> = ({
 
         {/* Modal Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/70">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-500/30">
-              <Shield className="w-4 h-4" />
-            </span>
+          <div className="flex items-center gap-2.5">
+            <BrandLogo size="md" glow />
             <div>
               <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 block">
                 [ SYSTEM STATUS WINDOW ]

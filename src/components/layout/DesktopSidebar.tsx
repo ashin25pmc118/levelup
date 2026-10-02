@@ -16,6 +16,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { sounds } from '../../services/soundEffects';
+import { BrandLogo } from '../common/BrandLogo';
 
 interface DesktopSidebarProps {
   currentTab: string;
@@ -47,9 +48,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ currentTab, onSe
     <aside className="hidden md:flex flex-col w-64 shrink-0 border-r border-slate-800/80 bg-slate-950/70 backdrop-blur-md p-4 min-h-[calc(100vh-57px)]">
       {/* Brand Header */}
       <div className="flex items-center gap-2.5 px-3 py-2 mb-4 rounded-xl bg-slate-900/60 border border-slate-800/80">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-600 text-slate-950 font-black shadow-md shadow-cyan-500/20 shrink-0">
-          <Sparkles className="w-5 h-5 text-white" />
-        </div>
+        <BrandLogo size="md" />
         <div>
           <h1 className="text-sm font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
             LEVEL UP

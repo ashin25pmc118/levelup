@@ -3,6 +3,7 @@ import { Sparkles, ArrowRight, Check, Shield, Flame, User, Clock, Dumbbell, Mess
 import { UserProfile, CharacterTitle, AppSettings } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
+import { BrandLogo } from '../../common/BrandLogo';
 
 interface OnboardingWizardProps {
   onComplete: (profile: UserProfile, settings: AppSettings) => void;
@@ -69,9 +70,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         {/* Progress bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-500/30">
-              <Sparkles className="w-4 h-4" />
-            </span>
+            <BrandLogo size="xs" glow />
             <span className="text-xs font-black tracking-widest text-cyan-400 uppercase">
               CHARACTER AWAKENING · STEP {step} OF 3
             </span>

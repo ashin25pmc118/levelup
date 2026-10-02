@@ -21,6 +21,7 @@ import { UserProfile, AppSettings } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
 import { smartwatch } from '../../services/smartwatchService';
+import { BrandLogo } from '../common/BrandLogo';
 
 interface HeaderHUDProps {
   profile: UserProfile;
@@ -85,11 +86,14 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               onNavigate('progress');
             }
           }}
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group"
           title="Open Player Status Card"
         >
+          {/* Brand Logo */}
+          <BrandLogo size="sm" glow className="transition-transform group-hover:scale-105" />
+
           {/* Level Circle */}
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border border-cyan-500/40 shadow-sm group-hover:border-cyan-400 transition-colors">
+          <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-600/20 border border-cyan-500/40 shadow-sm group-hover:border-cyan-400 transition-colors">
             <span className="text-xs font-black tracking-tight text-cyan-300">
               LVL <span className="text-sm text-white font-extrabold">{profile.level}</span>
             </span>
