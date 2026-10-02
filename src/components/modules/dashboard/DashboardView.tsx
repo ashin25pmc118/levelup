@@ -956,7 +956,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Quick Action Matrix */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <button
               onClick={() => onNavigate('train')}
               className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
@@ -992,6 +992,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h5 className="text-xs font-bold text-white">Breathwork</h5>
               <p className="text-[10px] text-slate-400 mt-0.5">Box 4-4-4-4 Reset</p>
             </button>
+
+            {onOpenSmartwatch && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenSmartwatch();
+                }}
+                className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-slate-800/80 transition-all text-left group cursor-pointer"
+              >
+                <div className="p-1.5 rounded-xl bg-rose-950/50 text-rose-400 border border-rose-500/30 w-fit mb-1.5 group-hover:scale-110 transition-transform">
+                  <Watch className="w-3.5 h-3.5" />
+                </div>
+                <h5 className="text-xs font-bold text-white">Watch Biometrics</h5>
+                <p className="text-[10px] text-slate-400 mt-0.5">Live Heart Rate & SpO2</p>
+              </button>
+            )}
           </div>
         </div>
       </div>

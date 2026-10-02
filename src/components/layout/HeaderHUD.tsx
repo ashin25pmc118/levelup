@@ -234,20 +234,29 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 }}
                 className={`p-2 rounded-lg border transition-all flex items-center gap-1.5 ${
                   swState.connected
-                    ? 'bg-rose-950/60 border-rose-500/50 text-rose-300 animate-pulse'
+                    ? 'bg-rose-950/70 border-rose-500/50 text-rose-300 shadow-sm shadow-rose-950/50'
                     : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-cyan-300 hover:border-cyan-500/40'
                 }`}
                 title={
                   swState.connected
-                    ? `Noise Watch: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'}`
-                    : 'Noise Smartwatch & Step Sync'
+                    ? `${swState.deviceName || 'Smartwatch'}: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} ${swState.spO2 ? '· ' + swState.spO2 + '% SpO2' : ''}`
+                    : 'Smartwatch Direct Biometrics & Step Sync (Zero Google Connect)'
                 }
               >
-                <Watch className="w-4 h-4" />
-                {swState.connected && swState.heartRate && (
-                  <span className="text-[11px] font-mono font-black text-rose-300 hidden md:inline">
-                    {swState.heartRate}
-                  </span>
+                {swState.connected && swState.heartRate ? (
+                  <>
+                    <Heart className="w-4 h-4 fill-rose-500 text-rose-400 animate-pulse" />
+                    <span className="text-[11px] font-mono font-black text-rose-300">
+                      {swState.heartRate} <span className="text-[9px] text-rose-400/80">BPM</span>
+                    </span>
+                    {swState.spO2 && (
+                      <span className="text-[10px] text-cyan-300 font-mono hidden lg:inline pl-1 border-l border-rose-800/60">
+                        {swState.spO2}%
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <Watch className="w-4 h-4" />
                 )}
               </button>
             )}
@@ -289,6 +298,21 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 <span>{shieldsCount}</span>
               </span>
             </div>
+
+            {/* Live Smartwatch Biometrics Pill (Mobile - When Connected) */}
+            {swState.connected && swState.heartRate && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  if (onOpenSmartwatch) onOpenSmartwatch();
+                }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-black shrink-0 active:scale-95 transition-all shadow-sm"
+                title={`Live Watch: ${swState.heartRate} BPM ${swState.spO2 ? '· ' + swState.spO2 + '% SpO2' : ''}`}
+              >
+                <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-400 animate-pulse" />
+                <span className="font-mono">{swState.heartRate}</span>
+              </button>
+            )}
 
             {/* Permanent 1-Click Mobile Theme Selector Button (Instant - No List) */}
             <button
@@ -395,9 +419,11 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                   <Watch className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-white block">Noise Watch</span>
+                  <span className="text-xs font-bold text-white block">Watch Biometrics</span>
                   <span className="text-[10px] text-slate-400">
-                    {swState.connected ? (swState.heartRate ? `${swState.heartRate} BPM` : 'Connected') : 'Pair watch'}
+                    {swState.connected
+                      ? `${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} ${swState.spO2 ? '· ' + swState.spO2 + '%' : ''}`
+                      : 'Direct Bluetooth (No Cloud)'}
                   </span>
                 </div>
               </button>

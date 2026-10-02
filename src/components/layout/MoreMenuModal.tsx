@@ -166,15 +166,15 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    Noise Smartwatch & Health Sync
+                    Smartwatch Biometrics & Health
                   </h4>
                   <p className="text-[10px] text-slate-400">
-                    Pair Bluetooth heart rate & bank daily steps for XP
+                    Live Heart Rate, SpO2 & XP Multiplier (Zero Google Connect)
                   </p>
                 </div>
               </div>
               <span className="text-[10px] px-2 py-1 rounded-lg bg-cyan-500 text-slate-950 font-black uppercase tracking-wider">
-                Sync
+                Live
               </span>
             </button>
           </div>

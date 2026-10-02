@@ -545,8 +545,8 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
             }`}
             title={
               swState.connected
-                ? `Noise Watch: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} (Tap to disconnect)`
-                : 'Pair Bluetooth Smartwatch for Live Heart Rate'
+                ? `${swState.deviceName || 'Smartwatch'}: ${swState.heartRate ? swState.heartRate + ' BPM' : 'Connected'} ${swState.spO2 ? '· ' + swState.spO2 + '% SpO2' : ''} (Tap to toggle)`
+                : 'Pair Bluetooth Smartwatch (Zero Google Connect)'
             }
           >
             <Heart
@@ -556,12 +556,19 @@ export const ActiveWorkoutSession: React.FC<ActiveWorkoutSessionProps> = ({
                   : 'text-slate-500'
               }`}
             />
-            <span className="font-mono font-bold text-[11px]">
-              {swState.connected
-                ? swState.heartRate
-                  ? `${swState.heartRate} BPM`
-                  : 'SYNCED'
-                : 'PAIR WATCH'}
+            <span className="font-mono font-bold text-[11px] flex items-center gap-1">
+              {swState.connected ? (
+                <>
+                  <span>{swState.heartRate ? `${swState.heartRate} BPM` : 'SYNCED'}</span>
+                  {swState.spO2 && (
+                    <span className="text-[10px] text-cyan-300 pl-1 border-l border-rose-800/60 hidden sm:inline">
+                      {swState.spO2}%
+                    </span>
+                  )}
+                </>
+              ) : (
+                'PAIR WATCH'
+              )}
             </span>
           </button>
 

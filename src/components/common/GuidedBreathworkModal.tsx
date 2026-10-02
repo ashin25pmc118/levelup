@@ -170,16 +170,21 @@ export const GuidedBreathworkModal: React.FC<GuidedBreathworkModalProps> = ({
           </button>
         </div>
 
-        {/* Real-time Smartwatch Heart Rate Feedback */}
+        {/* Real-time Smartwatch Heart Rate & SpO2 Feedback */}
         {swState.connected && swState.heartRate ? (
-          <div className="flex items-center justify-center gap-3 py-1.5 px-3 rounded-xl bg-slate-950/80 border border-rose-500/30 text-xs relative z-10 w-fit mx-auto">
+          <div className="flex items-center justify-center gap-2.5 py-1.5 px-3 rounded-xl bg-slate-950/80 border border-rose-500/30 text-xs relative z-10 w-fit mx-auto flex-wrap">
             <Heart className="w-4 h-4 text-rose-400 fill-rose-400 animate-pulse" />
             <span className="font-mono font-bold text-slate-200">
               Live Pulse: <strong className="text-rose-400">{swState.heartRate} BPM</strong>
             </span>
+            {swState.spO2 && (
+              <span className="text-[10px] text-cyan-300 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">
+                SpO2: {swState.spO2}%
+              </span>
+            )}
             {startBpm && startBpm > swState.heartRate && (
               <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded">
-                ↓ {startBpm - swState.heartRate} BPM
+                ↓ {startBpm - swState.heartRate} BPM (Calm)
               </span>
             )}
           </div>
