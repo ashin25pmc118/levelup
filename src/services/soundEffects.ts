@@ -200,83 +200,118 @@ class SoundEngine {
   }
 
   // ===============================
-  // AMBIENT STUDY SOUND SYNTHESIS (Zero External MP3 Assets)
+  // MULTI-TRACK AMBIENT MIXER (Zero External MP3 Assets)
+  // Simultaneous 4-Channel Synthesizer: Rain, Campfire, Cafe, 40Hz Gamma Beats
   // ===============================
-  private ambientSource: any = null;
-  private ambientGain: GainNode | null = null;
-  private currentAmbientType: 'brown' | 'binaural' | 'rain' | null = null;
+  private mixerActive: boolean = false;
+  private mixerVolumes = {
+    rain: 0,
+    campfire: 0,
+    cafe: 0,
+    gamma: 0
+  };
+  private trackNodes: {
+    rain?: { source: AudioNode; gain: GainNode };
+    campfire?: { source: AudioNode; crackleTimer?: any; gain: GainNode };
+    cafe?: { source: AudioNode; gain: GainNode };
+    gamma?: { oscL: OscillatorNode; oscR: OscillatorNode; gain: GainNode };
+  } = {};
+  private mixerMasterGain: GainNode | null = null;
 
-  public startAmbient(type: 'brown' | 'binaural' | 'rain', volume: number = 0.3) {
-    this.stopAmbient();
+  public getMixerVolumes() {
+    return { ...this.mixerVolumes };
+  }
+
+  public isMixerActive() {
+    return this.mixerActive;
+  }
+
+  public startMixer(initialVolumes?: Partial<{ rain: number; campfire: number; cafe: number; gamma: number }>) {
+    if (initialVolumes) {
+      if (initialVolumes.rain !== undefined) this.mixerVolumes.rain = Math.max(0, Math.min(1, initialVolumes.rain));
+      if (initialVolumes.campfire !== undefined) this.mixerVolumes.campfire = Math.max(0, Math.min(1, initialVolumes.campfire));
+      if (initialVolumes.cafe !== undefined) this.mixerVolumes.cafe = Math.max(0, Math.min(1, initialVolumes.cafe));
+      if (initialVolumes.gamma !== undefined) this.mixerVolumes.gamma = Math.max(0, Math.min(1, initialVolumes.gamma));
+    }
+
     const ctx = this.getContext();
     if (!ctx) return;
 
+    if (!this.mixerMasterGain) {
+      this.mixerMasterGain = ctx.createGain();
+      this.mixerMasterGain.gain.setValueAtTime(1, ctx.currentTime);
+      this.mixerMasterGain.connect(ctx.destination);
+    }
+
+    this.mixerActive = true;
+
+    // Start each track if volume > 0 and not yet created
+    this.updateTrack('rain');
+    this.updateTrack('campfire');
+    this.updateTrack('cafe');
+    this.updateTrack('gamma');
+  }
+
+  public setMixerTrackVolume(track: 'rain' | 'campfire' | 'cafe' | 'gamma', vol: number) {
+    const clamped = Math.max(0, Math.min(1, vol));
+    this.mixerVolumes[track] = clamped;
+
+    if (!this.mixerActive && clamped > 0) {
+      this.startMixer();
+      return;
+    }
+
+    if (this.mixerActive) {
+      this.updateTrack(track);
+    }
+  }
+
+  private updateTrack(track: 'rain' | 'campfire' | 'cafe' | 'gamma') {
+    const ctx = this.getContext();
+    if (!ctx || !this.mixerMasterGain) return;
+    const vol = this.mixerVolumes[track];
+
+    if (vol <= 0) {
+      // Fade out and stop track
+      const existing = this.trackNodes[track];
+      if (existing) {
+        try {
+          existing.gain.gain.setValueAtTime(existing.gain.gain.value, ctx.currentTime);
+          existing.gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+          setTimeout(() => {
+            if (this.mixerVolumes[track] <= 0) {
+              this.stopTrackNode(track);
+            }
+          }, 350);
+        } catch {}
+      }
+      return;
+    }
+
+    // If track already exists, smoothly update volume
+    if (this.trackNodes[track]) {
+      const g = this.trackNodes[track]?.gain;
+      if (g) {
+        g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(vol * 0.45, ctx.currentTime + 0.1);
+      }
+      return;
+    }
+
+    // Otherwise instantiate track synthesizer
     try {
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(volume, ctx.currentTime);
-      gain.connect(ctx.destination);
-      this.ambientGain = gain;
-      this.currentAmbientType = type;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(vol * 0.45, ctx.currentTime + 0.2);
+      gain.connect(this.mixerMasterGain);
 
-      if (type === 'brown') {
-        // Brown noise: deep rumble / study noise (random walk)
-        const bufferSize = ctx.sampleRate * 4;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        let lastOut = 0.0;
-        for (let i = 0; i < bufferSize; i++) {
-          const white = Math.random() * 2 - 1;
-          data[i] = (lastOut + 0.02 * white) / 1.02;
-          lastOut = data[i];
-          data[i] *= 3.5;
-        }
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-        noise.loop = true;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(400, ctx.currentTime);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        noise.start();
-        this.ambientSource = noise;
-      } else if (type === 'binaural') {
-        // 40Hz Gamma wave: stimulates intense cognitive focus and mental clarity
-        const merger = ctx.createChannelMerger(2);
-        const oscL = ctx.createOscillator();
-        oscL.type = 'sine';
-        oscL.frequency.setValueAtTime(210, ctx.currentTime);
-        const gainL = ctx.createGain();
-        gainL.gain.setValueAtTime(0.25, ctx.currentTime);
-        oscL.connect(gainL);
-        gainL.connect(merger, 0, 0);
-
-        const oscR = ctx.createOscillator();
-        oscR.type = 'sine';
-        oscR.frequency.setValueAtTime(250, ctx.currentTime); // 250 - 210 = 40Hz beat
-        const gainR = ctx.createGain();
-        gainR.gain.setValueAtTime(0.25, ctx.currentTime);
-        oscR.connect(gainR);
-        gainR.connect(merger, 0, 1);
-
-        merger.connect(gain);
-        oscL.start();
-        oscR.start();
-
-        this.ambientSource = {
-          stop: () => {
-            try { oscL.stop(); oscR.stop(); } catch {}
-          }
-        };
-      } else if (type === 'rain') {
-        // Calming rain ambient sound
-        const bufferSize = ctx.sampleRate * 4;
+      if (track === 'rain') {
+        // Continuous rain with bandpass filter
+        const bufferSize = ctx.sampleRate * 3;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-          data[i] = (Math.random() * 2 - 1) * 0.35;
+          data[i] = (Math.random() * 2 - 1) * 0.4;
         }
         const noise = ctx.createBufferSource();
         noise.buffer = buffer;
@@ -284,31 +319,157 @@ class SoundEngine {
 
         const filter = ctx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(850, ctx.currentTime);
-        filter.Q.setValueAtTime(0.65, ctx.currentTime);
+        filter.frequency.setValueAtTime(900, ctx.currentTime);
+        filter.Q.setValueAtTime(0.7, ctx.currentTime);
 
         noise.connect(filter);
         filter.connect(gain);
         noise.start();
-        this.ambientSource = noise;
+
+        this.trackNodes.rain = { source: noise, gain };
+      } else if (track === 'campfire') {
+        // Warm brown rumble + crackle generator
+        const bufferSize = ctx.sampleRate * 3;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let lastOut = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          data[i] = (lastOut + 0.02 * white) / 1.02;
+          lastOut = data[i];
+          data[i] *= 2.8;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = true;
+
+        const lowpass = ctx.createBiquadFilter();
+        lowpass.type = 'lowpass';
+        lowpass.frequency.setValueAtTime(320, ctx.currentTime);
+
+        noise.connect(lowpass);
+        lowpass.connect(gain);
+        noise.start();
+
+        // Sporadic crackle bursts
+        const crackleTimer = setInterval(() => {
+          if (!this.mixerActive || this.mixerVolumes.campfire <= 0) return;
+          if (Math.random() < 0.6) {
+            try {
+              const snap = ctx.createBufferSource();
+              const snapBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.02), ctx.sampleRate);
+              const snapData = snapBuf.getChannelData(0);
+              for (let j = 0; j < snapBuf.length; j++) {
+                snapData[j] = (Math.random() * 2 - 1) * (1 - j / snapBuf.length);
+              }
+              snap.buffer = snapBuf;
+              const snapGain = ctx.createGain();
+              snapGain.gain.setValueAtTime(this.mixerVolumes.campfire * 0.25 * (0.4 + Math.random() * 0.6), ctx.currentTime);
+              snap.connect(snapGain);
+              snapGain.connect(gain);
+              snap.start();
+            } catch {}
+          }
+        }, 180);
+
+        this.trackNodes.campfire = { source: noise, crackleTimer, gain };
+      } else if (track === 'cafe') {
+        // Cafe murmur: warm pinkish mid-tones
+        const bufferSize = ctx.sampleRate * 4;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          data[i] = (b0 + b1 + b2) * 0.45;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = true;
+
+        const band = ctx.createBiquadFilter();
+        band.type = 'bandpass';
+        band.frequency.setValueAtTime(550, ctx.currentTime);
+        band.Q.setValueAtTime(0.9, ctx.currentTime);
+
+        noise.connect(band);
+        band.connect(gain);
+        noise.start();
+
+        this.trackNodes.cafe = { source: noise, gain };
+      } else if (track === 'gamma') {
+        // 40Hz Gamma Binaural Beat (Left: 200Hz, Right: 240Hz)
+        const merger = ctx.createChannelMerger(2);
+
+        const oscL = ctx.createOscillator();
+        oscL.type = 'sine';
+        oscL.frequency.setValueAtTime(200, ctx.currentTime);
+        const gL = ctx.createGain();
+        gL.gain.setValueAtTime(0.3, ctx.currentTime);
+        oscL.connect(gL);
+        gL.connect(merger, 0, 0);
+
+        const oscR = ctx.createOscillator();
+        oscR.type = 'sine';
+        oscR.frequency.setValueAtTime(240, ctx.currentTime);
+        const gR = ctx.createGain();
+        gR.gain.setValueAtTime(0.3, ctx.currentTime);
+        oscR.connect(gR);
+        gR.connect(merger, 0, 1);
+
+        merger.connect(gain);
+        oscL.start();
+        oscR.start();
+
+        this.trackNodes.gamma = { oscL, oscR, gain };
       }
-    } catch {
-      // Fallback
+    } catch {}
+  }
+
+  private stopTrackNode(track: 'rain' | 'campfire' | 'cafe' | 'gamma') {
+    const node = this.trackNodes[track];
+    if (!node) return;
+    try {
+      if (track === 'gamma') {
+        const gNode = node as { oscL: OscillatorNode; oscR: OscillatorNode; gain: GainNode };
+        gNode.oscL?.stop();
+        gNode.oscR?.stop();
+      } else {
+        const sNode = node as { source: any; crackleTimer?: any; gain: GainNode };
+        sNode.source?.stop?.();
+        if (sNode.crackleTimer) clearInterval(sNode.crackleTimer);
+      }
+    } catch {}
+    delete this.trackNodes[track];
+  }
+
+  public stopMixer() {
+    this.mixerActive = false;
+    (['rain', 'campfire', 'cafe', 'gamma'] as const).forEach(track => {
+      this.stopTrackNode(track);
+    });
+  }
+
+  // Backwards compatibility for single-ambient calls
+  public startAmbient(type: 'brown' | 'binaural' | 'rain', volume: number = 0.3) {
+    if (type === 'rain') {
+      this.startMixer({ rain: volume, campfire: 0, cafe: 0, gamma: 0 });
+    } else if (type === 'binaural') {
+      this.startMixer({ rain: 0, campfire: 0, cafe: 0, gamma: volume });
+    } else if (type === 'brown') {
+      this.startMixer({ rain: 0, campfire: volume, cafe: 0, gamma: 0 });
     }
   }
 
   public stopAmbient() {
-    if (this.ambientSource) {
-      try {
-        this.ambientSource.stop?.();
-      } catch {}
-      this.ambientSource = null;
-    }
-    this.currentAmbientType = null;
+    this.stopMixer();
   }
 
   public isAmbientPlaying() {
-    return this.ambientSource !== null;
+    return this.mixerActive && Object.values(this.mixerVolumes).some(v => v > 0);
   }
 
   public playWaterDrop() {

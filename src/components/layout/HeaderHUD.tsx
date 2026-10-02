@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Volume2,
   VolumeX,
@@ -13,11 +13,13 @@ import {
   SlidersHorizontal,
   X,
   ChevronRight,
-  FileText
+  FileText,
+  Cloud
 } from 'lucide-react';
 import { UserProfile, AppSettings } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
+import { cloudSync } from '../../services/supabaseService';
 import { BrandLogo } from '../common/BrandLogo';
 import { ThemePickerModal } from '../common/ThemePickerModal';
 
@@ -29,6 +31,7 @@ interface HeaderHUDProps {
   onNavigate: (tab: string) => void;
   onOpenPlayerCard?: () => void;
   onOpenThemePicker?: () => void;
+  onOpenCloudSync?: () => void;
 }
 
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({
@@ -38,10 +41,25 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   onOpenQuickNote,
   onNavigate,
   onOpenPlayerCard,
-  onOpenThemePicker
+  onOpenThemePicker,
+  onOpenCloudSync
 }) => {
   const [isMobileUtilityOpen, setIsMobileUtilityOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState<'connected' | 'configured' | 'offline'>(() => {
+    if (cloudSync.getState().isAuthenticated) return 'connected';
+    if (cloudSync.isConfigured()) return 'configured';
+    return 'offline';
+  });
+
+  useEffect(() => {
+    const unsub = cloudSync.subscribe(st => {
+      if (st.isAuthenticated) setCloudStatus('connected');
+      else if (cloudSync.isConfigured()) setCloudStatus('configured');
+      else setCloudStatus('offline');
+    });
+    return unsub;
+  }, []);
 
   const openThemePicker = () => {
     sounds.playClick();
@@ -194,6 +212,33 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span className="hidden md:inline">Note</span>
+            </button>
+
+            {/* Cloud Database Sync Button */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onOpenCloudSync?.();
+              }}
+              className="relative p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-colors"
+              title={
+                cloudStatus === 'connected'
+                  ? 'Cloud Database: Connected (Supabase)'
+                  : cloudStatus === 'configured'
+                  ? 'Cloud Database: Ready to Log In'
+                  : 'Cloud Database Sync (Supabase Free Tier)'
+              }
+            >
+              <Cloud className="w-4 h-4 text-cyan-400" />
+              <span
+                className={`absolute top-1 right-1 w-2 h-2 rounded-full ${
+                  cloudStatus === 'connected'
+                    ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50 animate-pulse'
+                    : cloudStatus === 'configured'
+                    ? 'bg-amber-400'
+                    : 'bg-slate-600'
+                }`}
+              />
             </button>
 
             {/* 1-Click Theme Switcher (No List) */}
@@ -385,6 +430,35 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 <div>
                   <span className="text-xs font-bold text-white block">Sound FX</span>
                   <span className="text-[10px] text-slate-400">{settings.soundEnabled ? 'Enabled (Web Audio)' : 'Muted'}</span>
+                </div>
+              </button>
+
+              {/* Cloud Sync Hub */}
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setIsMobileUtilityOpen(false);
+                  onOpenCloudSync?.();
+                }}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-left active:scale-[0.98] transition-all min-h-[56px] col-span-2"
+              >
+                <div className="p-2 rounded-xl bg-cyan-950 border border-cyan-500/30 text-cyan-400 shrink-0">
+                  <Cloud className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white block">Cloud Database Sync</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                      cloudStatus === 'connected'
+                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
+                        : cloudStatus === 'configured'
+                        ? 'bg-amber-950 text-amber-400 border border-amber-500/30'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {cloudStatus === 'connected' ? 'Connected' : cloudStatus === 'configured' ? 'Login Needed' : 'Local Only'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">Sync phone & PC with free Supabase</span>
                 </div>
               </button>
             </div>

@@ -31,7 +31,9 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
-  X
+  X,
+  Brain,
+  Target
 } from 'lucide-react';
 import {
   Exercise,
@@ -63,12 +65,14 @@ const Roadmap12MonthView = lazy(() => import('../fitness/Roadmap12MonthView').th
 const FitnessBenchmarkTests = lazy(() => import('../fitness/FitnessBenchmarkTests').then(m => ({ default: m.FitnessBenchmarkTests })));
 const EyeCareTrainer = lazy(() => import('./EyeCareTrainer').then(m => ({ default: m.EyeCareTrainer })));
 const ReflexHub = lazy(() => import('./ReflexHub').then(m => ({ default: m.ReflexHub })));
+const ChimpMemoryTest = lazy(() => import('./ChimpMemoryTest').then(m => ({ default: m.ChimpMemoryTest })));
+const StroopTest = lazy(() => import('./StroopTest').then(m => ({ default: m.StroopTest })));
 
 interface TrainModuleProps {
   exercises: Exercise[];
   onSaveExercises: (exercises: Exercise[]) => void;
   onAwardXP: (amount: number, description: string, stat: 'strength' | 'stamina' | 'reflex' | 'awareness' | 'recovery') => void;
-  initialTab?: 'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex';
+  initialTab?: 'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex' | 'chimp' | 'stroop';
   onTabChange?: (tab: string) => void;
 }
 
@@ -83,7 +87,7 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
 }) => {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<
-    'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex'
+    'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex' | 'chimp' | 'stroop'
   >(initialTab || 'today');
   const [isMobileModeMenuOpen, setIsMobileModeMenuOpen] = useState(false);
   const [isIntroCollapsed, setIsIntroCollapsed] = useState(false);
@@ -111,7 +115,9 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
     { id: 'benchmarks', label: 'PR Benchmarks', shortLabel: 'PR Tests', icon: Award, color: 'text-pink-400', desc: 'Max Reps & Hold Records', group: 'fitness' },
     { id: 'classic', label: 'Quick Log & Cardio', shortLabel: 'Cardio', icon: Flame, color: 'text-orange-400', desc: 'Running, Walking & Free Sets', group: 'fitness' },
     { id: 'eyecare', label: 'Eye-Care & Schulte Table', shortLabel: 'Schulte & Eyes', icon: Eye, color: 'text-purple-300', desc: 'Peripheral Vision & Saccades', group: 'cognitive' },
-    { id: 'reflex', label: 'Reflex Test', shortLabel: 'Reflexes', icon: Activity, color: 'text-green-400', desc: 'Millisecond Digital Tap & Agility', group: 'cognitive' }
+    { id: 'reflex', label: 'Reflex Test', shortLabel: 'Reflexes', icon: Activity, color: 'text-green-400', desc: 'Millisecond Digital Tap & Agility', group: 'cognitive' },
+    { id: 'chimp', label: 'Chimp Working Memory', shortLabel: 'Chimp Test', icon: Brain, color: 'text-amber-400', desc: 'Kyoto Primate Spatial Memory Benchmark', group: 'cognitive' },
+    { id: 'stroop', label: 'Stroop Focus Test', shortLabel: 'Stroop Test', icon: Target, color: 'text-cyan-400', desc: '30s Prefrontal Inhibitory Control', group: 'cognitive' }
   ] as const;
 
   // Fitness Profile & Progression States
@@ -428,6 +434,16 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
                       ms Tap
                     </span>
                   )}
+                  {tab.id === 'chimp' && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/50 font-mono font-bold">
+                      Kyoto
+                    </span>
+                  )}
+                  {tab.id === 'stroop' && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 font-mono font-bold">
+                      30s Stroop
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -467,7 +483,7 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
             className="px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>All Modes (8)</span>
+            <span>All Modes ({TRAIN_TABS.length})</span>
           </button>
         </div>
 
@@ -514,7 +530,7 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
                 </span>
                 <div>
                   <h3 className="text-sm font-black text-white">Select Training Mode</h3>
-                  <p className="text-[11px] text-slate-400">All 8 Calisthenics, Vision & Reflex modules</p>
+                  <p className="text-[11px] text-slate-400">All 10 Calisthenics, Vision, Memory & Reflex modules</p>
                 </div>
               </div>
               <button
@@ -871,6 +887,24 @@ export const TrainModule: React.FC<TrainModuleProps> = ({
       {activeTab === 'reflex' && (
         <Suspense fallback={<ModuleLoadingFallback message="Loading Millisecond Reaction Tester..." />}>
           <ReflexHub highScores={reflexScores} onSaveHighScore={handleSaveReflexScore} onAwardXP={onAwardXP} />
+        </Suspense>
+      )}
+
+      {/* ======================================================== */}
+      {/* 9. CHIMPANZEE SPATIAL WORKING MEMORY TAB */}
+      {/* ======================================================== */}
+      {activeTab === 'chimp' && (
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Chimpanzee Working Memory Benchmark..." />}>
+          <ChimpMemoryTest onAwardXP={onAwardXP} />
+        </Suspense>
+      )}
+
+      {/* ======================================================== */}
+      {/* 10. STROOP FOCUS INHIBITORY TEST TAB */}
+      {/* ======================================================== */}
+      {activeTab === 'stroop' && (
+        <Suspense fallback={<ModuleLoadingFallback message="Loading Stroop Inhibitory Control Test..." />}>
+          <StroopTest onAwardXP={onAwardXP} />
         </Suspense>
       )}
     </div>

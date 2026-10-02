@@ -13,11 +13,13 @@ import {
   Sparkles,
   Shield,
   Dumbbell,
-  Palette
+  Palette,
+  Cloud
 } from 'lucide-react';
 import { UserProfile, AppSettings, Exercise } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
+import { cloudSync } from '../../../services/supabaseService';
 import { THEME_OPTIONS, AppThemeType } from '../../common/ThemePickerModal';
 
 interface SettingsViewProps {
@@ -27,6 +29,7 @@ interface SettingsViewProps {
   onUpdateProfile: (profile: UserProfile) => void;
   onUpdateSettings: (settings: AppSettings) => void;
   onReloadAllData: () => void;
+  onOpenCloudSync?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -35,7 +38,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   exercises,
   onUpdateProfile,
   onUpdateSettings,
-  onReloadAllData
+  onReloadAllData,
+  onOpenCloudSync
 }) => {
   // Profile state
   const [name, setName] = useState(profile.name);
@@ -315,6 +319,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* CLOUD DATABASE SYNC & MULTI-DEVICE BACKUP (SUPABASE) */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/40 border border-cyan-500/40 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-cyan-950 border border-cyan-500/30 text-cyan-400">
+              <Cloud className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white">Cloud Database Sync (Supabase)</h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30 uppercase">
+                  100% Free
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Bi-directional sync across your phone and laptop without paying a cent.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              sounds.playClick();
+              onOpenCloudSync?.();
+            }}
+            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
+          >
+            <Cloud className="w-4 h-4 stroke-[2.5]" />
+            <span>Open Cloud Sync Hub</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Status</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+              <span className={`w-2 h-2 rounded-full ${cloudSync.getState().isAuthenticated ? 'bg-emerald-400 animate-pulse' : cloudSync.isConfigured() ? 'bg-amber-400' : 'bg-slate-500'}`} />
+              <span>{cloudSync.getState().isAuthenticated ? 'Connected & Synced' : cloudSync.isConfigured() ? 'Configured (Sign in)' : 'Offline / Local Only'}</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Database Provider</span>
+            <span className="text-xs font-bold text-cyan-300">Supabase Free Postgres</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Privacy & Security</span>
+            <span className="text-xs font-bold text-emerald-400">Row-Level Security (RLS)</span>
+          </div>
         </div>
       </div>
 

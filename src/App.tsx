@@ -53,6 +53,7 @@ const PlayerStatusCardModal = lazy(() => import('./components/common/PlayerStatu
 const QuickNoteModal = lazy(() => import('./components/common/QuickNoteModal').then(m => ({ default: m.QuickNoteModal })));
 const LevelUpModal = lazy(() => import('./components/common/LevelUpModal').then(m => ({ default: m.LevelUpModal })));
 const OnboardingWizard = lazy(() => import('./components/modules/onboarding/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
+const CloudSyncModal = lazy(() => import('./components/common/CloudSyncModal').then(m => ({ default: m.CloudSyncModal })));
 
 interface SystemToast {
   id: string;
@@ -82,7 +83,7 @@ export function App() {
 
   // UI state
   const [currentTab, setCurrentTab] = useState<string>('today');
-  const [trainSubTab, setTrainSubTab] = useState<'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex'>('today');
+  const [trainSubTab, setTrainSubTab] = useState<'today' | 'skills' | 'library' | 'roadmap' | 'benchmarks' | 'classic' | 'eyecare' | 'reflex' | 'chimp' | 'stroop'>('today');
 
   const handleNavigate = (tab: string, subTab?: string) => {
     setCurrentTab(tab);
@@ -95,6 +96,7 @@ export function App() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
+  const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
   const [toasts, setToasts] = useState<SystemToast[]>([]);
   const [levelUpProfile, setLevelUpProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !settings.onboardingCompleted);
@@ -258,6 +260,7 @@ export function App() {
         onNavigate={setCurrentTab}
         onOpenPlayerCard={() => setIsPlayerCardOpen(true)}
         onOpenThemePicker={() => setIsThemePickerOpen(true)}
+        onOpenCloudSync={() => setIsCloudSyncOpen(true)}
       />
 
       <div className="flex flex-1 max-w-7xl w-full mx-auto">
@@ -415,6 +418,7 @@ export function App() {
               onUpdateProfile={setProfile}
               onUpdateSettings={setSettings}
               onReloadAllData={reloadAllData}
+              onOpenCloudSync={() => setIsCloudSyncOpen(true)}
             />
           )}
             </Suspense>
@@ -477,6 +481,15 @@ export function App() {
             profile={profile}
             isOpen={isPlayerCardOpen}
             onClose={() => setIsPlayerCardOpen(false)}
+          />
+        )}
+
+        {/* Supabase Free Multi-Device Cloud Sync Hub */}
+        {isCloudSyncOpen && (
+          <CloudSyncModal
+            isOpen={isCloudSyncOpen}
+            onClose={() => setIsCloudSyncOpen(false)}
+            onReloadData={reloadAllData}
           />
         )}
 
