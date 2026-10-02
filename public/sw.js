@@ -1,9 +1,14 @@
-const CACHE_NAME = 'levelup-cache-v1';
+const CACHE_NAME = 'levelup-cache-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/manifest.webmanifest',
   '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/logo.png',
   '/icons.svg',
   '/demo.html'
 ];
