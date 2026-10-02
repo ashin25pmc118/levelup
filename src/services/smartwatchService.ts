@@ -140,21 +140,17 @@ class SmartwatchService {
         0x180D, // Heart Rate
         0x1822, // Pulse Oximeter
         0x180F, // Battery Service
-        0x180A  // Device Information
+        0x180A, // Device Information
+        0x1800, // Generic Access
+        0x1801, // Generic Attribute
+        0xFEE0, // Mi / Amazfit / Generic sports band
+        0xFEE7  // Health Profile (Noise, boAt, Fire-Boltt, DaFit)
       ];
 
-      // Request device with Heart Rate filter first, fallback to acceptAllDevices
+      // Use acceptAllDevices: true so Chrome displays ALL nearby Bluetooth devices without hiding them
       const device = await (navigator as any).bluetooth.requestDevice({
-        filters: [
-          { services: ['heart_rate'] }
-        ],
+        acceptAllDevices: true,
         optionalServices
-      }).catch(async () => {
-        // Fallback for smartwatches that broadcast custom names or accept all nearby BLE devices
-        return await (navigator as any).bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices
-        });
       });
 
       if (!device) return false;
@@ -181,78 +177,120 @@ class SmartwatchService {
 
       // 1. Connect to Heart Rate Service (0x180D)
       try {
-        const hrService = await server.getPrimaryService('heart_rate');
-        const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
-        this.hrCharacteristic = hrChar;
+        let hrService: any = null;
+        try {
+          hrService = await server.getPrimaryService('heart_rate');
+        } catch {
+          hrService = await server.getPrimaryService(0x180D);
+        }
 
-        await hrChar.startNotifications();
-        hrChar.addEventListener('characteristicvaluechanged', (event: any) => {
-          const value = event.target.value;
-          const { bpm, hrv } = this.parseHeartRatePayload(value);
-          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-          const newHistory = [...this.state.history, { time, bpm, spO2: this.state.spO2 }].slice(-40);
-
-          this.updateState({
-            heartRate: bpm,
-            hrv: hrv !== null ? hrv : this.state.hrv,
-            lastUpdated: time,
-            history: newHistory
-          });
-
-          if (this.onHeartRateChange) {
-            this.onHeartRateChange(bpm);
+        if (hrService) {
+          let hrChar: any = null;
+          try {
+            hrChar = await hrService.getCharacteristic('heart_rate_measurement');
+          } catch {
+            hrChar = await hrService.getCharacteristic(0x2A37);
           }
-        });
+
+          if (hrChar) {
+            this.hrCharacteristic = hrChar;
+            await hrChar.startNotifications();
+            hrChar.addEventListener('characteristicvaluechanged', (event: any) => {
+              const value = event.target.value;
+              const { bpm, hrv } = this.parseHeartRatePayload(value);
+              const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+              const newHistory = [...this.state.history, { time, bpm, spO2: this.state.spO2 }].slice(-40);
+
+              this.updateState({
+                heartRate: bpm,
+                hrv: hrv !== null ? hrv : this.state.hrv,
+                lastUpdated: time,
+                history: newHistory
+              });
+
+              if (this.onHeartRateChange) {
+                this.onHeartRateChange(bpm);
+              }
+            });
+          }
+        }
       } catch (hrErr) {
         console.warn('Standard Heart Rate service not available on this watch:', hrErr);
       }
 
       // 2. Connect to Pulse Oximeter / SpO2 Service (0x1822)
       try {
-        const oximeterService = await server.getPrimaryService('pulse_oximeter');
-        let oximeterChar: any = null;
+        let oximeterService: any = null;
         try {
-          oximeterChar = await oximeterService.getCharacteristic('plx_continuous_measurement_characteristic');
+          oximeterService = await server.getPrimaryService('pulse_oximeter');
         } catch {
-          oximeterChar = await oximeterService.getCharacteristic('plx_spot_check_measurement_characteristic');
+          try {
+            oximeterService = await server.getPrimaryService(0x1822);
+          } catch {}
         }
 
-        if (oximeterChar) {
-          this.spo2Characteristic = oximeterChar;
-          await oximeterChar.startNotifications();
-          oximeterChar.addEventListener('characteristicvaluechanged', (event: any) => {
-            const value = event.target.value;
-            const spo2 = this.parseSpO2Payload(value);
-            if (spo2) {
-              this.updateState({ spO2: spo2 });
-              if (this.onSpO2Change) {
-                this.onSpO2Change(spo2);
+        if (oximeterService) {
+          let oximeterChar: any = null;
+          try {
+            oximeterChar = await oximeterService.getCharacteristic('plx_continuous_measurement_characteristic');
+          } catch {
+            try {
+              oximeterChar = await oximeterService.getCharacteristic('plx_spot_check_measurement_characteristic');
+            } catch {
+              try {
+                oximeterChar = await oximeterService.getCharacteristic(0x2A5F);
+              } catch {
+                oximeterChar = await oximeterService.getCharacteristic(0x2A5E);
               }
             }
-          });
+          }
+
+          if (oximeterChar) {
+            this.spo2Characteristic = oximeterChar;
+            await oximeterChar.startNotifications();
+            oximeterChar.addEventListener('characteristicvaluechanged', (event: any) => {
+              const value = event.target.value;
+              const spo2 = this.parseSpO2Payload(value);
+              if (spo2) {
+                this.updateState({ spO2: spo2 });
+                if (this.onSpO2Change) {
+                  this.onSpO2Change(spo2);
+                }
+              }
+            });
+          }
         }
       } catch (oxErr) {
-        // Some watches package SpO2 in custom services or broadcast spot check
-        console.info('Standard Pulse Oximeter service not detected; spot-check SpO2 active.');
+        console.info('Standard Pulse Oximeter service not detected.');
       }
 
       // 3. Connect to Battery Service (0x180F)
       try {
-        const batteryService = await server.getPrimaryService('battery_service');
-        const batteryChar = await batteryService.getCharacteristic('battery_level');
-        this.batteryCharacteristic = batteryChar;
-        const val = await batteryChar.readValue();
-        const level = val.getUint8(0);
-        this.updateState({ batteryLevel: level });
-
+        let batteryService: any = null;
         try {
-          await batteryChar.startNotifications();
-          batteryChar.addEventListener('characteristicvaluechanged', (event: any) => {
-            const newLevel = event.target.value.getUint8(0);
-            this.updateState({ batteryLevel: newLevel });
-          });
-        } catch {}
+          batteryService = await server.getPrimaryService('battery_service');
+        } catch {
+          try {
+            batteryService = await server.getPrimaryService(0x180F);
+          } catch {}
+        }
+
+        if (batteryService) {
+          const batteryChar = await batteryService.getCharacteristic('battery_level');
+          this.batteryCharacteristic = batteryChar;
+          const val = await batteryChar.readValue();
+          const level = val.getUint8(0);
+          this.updateState({ batteryLevel: level });
+
+          try {
+            await batteryChar.startNotifications();
+            batteryChar.addEventListener('characteristicvaluechanged', (event: any) => {
+              const newLevel = event.target.value.getUint8(0);
+              this.updateState({ batteryLevel: newLevel });
+            });
+          } catch {}
+        }
       } catch (batErr) {
         console.info('Battery service not exposed by watch.');
       }

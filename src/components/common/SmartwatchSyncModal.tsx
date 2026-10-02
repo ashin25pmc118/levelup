@@ -434,7 +434,7 @@ export const SmartwatchSyncModal: React.FC<SmartwatchSyncModalProps> = ({
                 ) : (
                   <Bluetooth className="w-4 h-4" />
                 )}
-                <span>Pair Bluetooth Watch</span>
+                <span>Pair Bluetooth Watch (All Devices)</span>
               </button>
             )}
 
@@ -456,10 +456,31 @@ export const SmartwatchSyncModal: React.FC<SmartwatchSyncModalProps> = ({
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-slate-300" />
-                  <span>Test Simulator</span>
+                  <span>Test Live Simulator</span>
                 </>
               )}
             </button>
+          </div>
+
+          {/* Device Discovery Troubleshooting Helper */}
+          <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2 text-[11px] text-slate-300">
+            <div className="font-bold text-cyan-400 flex items-center gap-1.5">
+              <span>💡 Watch not appearing in the Bluetooth list? Quick Fixes:</span>
+            </div>
+            <ul className="space-y-1 list-disc list-inside text-slate-400">
+              <li>
+                <strong className="text-slate-200">Disconnect from Phone App:</strong> If your watch is currently linked to the NoiseFit, boAt, or Zepp app on your phone, Bluetooth will hide the watch. Turn off your phone's Bluetooth for 15 seconds so the watch becomes discoverable!
+              </li>
+              <li>
+                <strong className="text-slate-200">Wake up Watch Screen:</strong> Many watches sleep their Bluetooth radio when the screen is dark. Tap the watch display to wake it up.
+              </li>
+              <li>
+                <strong className="text-slate-200">Why Phone/PC doesn't appear:</strong> Only wearable biometric sensors broadcast heart rate. Normal phones and laptops act as receivers, not heart rate transmitters.
+              </li>
+              <li>
+                <strong className="text-slate-200">Instant Hands-on:</strong> Tap <span className="text-amber-300 font-bold">&quot;Test Live Simulator&quot;</span> anytime to experience the live heartbeat, SpO2, and XP multipliers immediately!
+              </li>
+            </ul>
           </div>
 
           {swState.error && (
