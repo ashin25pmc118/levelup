@@ -344,6 +344,51 @@ export interface AppSettings {
   onboardingCompleted: boolean;
 }
 
+export interface HydrationState {
+  date: string; // YYYY-MM-DD
+  targetMl: number; // default 3000
+  currentMl: number;
+  streak: number;
+  lastCompletedDate?: string;
+  history?: Record<string, number>; // date -> ml
+}
+
+export interface AtomicHabit {
+  id: string;
+  title: string;
+  category: 'health' | 'productivity' | 'mindset' | 'learning' | 'fitness' | 'routine';
+  icon: string; // lucide icon identifier
+  statTarget: StatType;
+  xpReward: number; // 10-30 XP
+  currentStreak: number;
+  bestStreak: number;
+  history: Record<string, boolean>; // date (YYYY-MM-DD) -> true
+  createdAt: string;
+}
+
+export interface ProtocolStep {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  isCompleted: boolean;
+  completedAt?: string;
+}
+
+export interface DailyProtocolsState {
+  date: string; // YYYY-MM-DD
+  morning: {
+    steps: ProtocolStep[];
+    isCompleted: boolean;
+    xpClaimed: boolean;
+  };
+  evening: {
+    steps: ProtocolStep[];
+    isCompleted: boolean;
+    xpClaimed: boolean;
+  };
+}
+
 export interface FullBackupData {
   version: string;
   exportedAt: string;
@@ -370,4 +415,7 @@ export interface FullBackupData {
   progressionStates?: Record<string, import('../services/fitness/fitnessTypes').ExerciseProgressionState>;
   benchmarkRecords?: import('../services/fitness/fitnessTypes').BenchmarkRecord[];
   fitnessSessions?: import('../services/fitness/fitnessTypes').CompletedWorkoutSession[];
+  hydrationState?: HydrationState;
+  atomicHabits?: AtomicHabit[];
+  dailyProtocols?: DailyProtocolsState;
 }

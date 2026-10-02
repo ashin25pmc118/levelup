@@ -18,7 +18,12 @@ import {
   Achievement,
   WeeklyReview,
   AppSettings,
-  FullBackupData
+  FullBackupData,
+  HydrationState,
+  AtomicHabit,
+  DailyProtocolsState,
+  ProtocolStep,
+  StatType
 } from '../types';
 import {
   UserFitnessProfile,
@@ -51,7 +56,10 @@ const STORAGE_KEYS = {
   FITNESS_PROFILE: 'levelup_fitness_profile',
   PROGRESSION_STATES: 'levelup_progression_states',
   BENCHMARK_RECORDS: 'levelup_benchmark_records',
-  FITNESS_SESSIONS: 'levelup_fitness_sessions'
+  FITNESS_SESSIONS: 'levelup_fitness_sessions',
+  HYDRATION: 'levelup_hydration_state',
+  ATOMIC_HABITS: 'levelup_atomic_habits',
+  DAILY_PROTOCOLS: 'levelup_daily_protocols'
 };
 
 const DEFAULT_FITNESS_PROFILE: UserFitnessProfile = {
@@ -1813,6 +1821,100 @@ const DEFAULT_SETTINGS: AppSettings = {
   onboardingCompleted: true
 };
 
+const DEFAULT_HYDRATION_STATE: HydrationState = {
+  date: new Date().toISOString().split('T')[0],
+  targetMl: 3000,
+  currentMl: 0,
+  streak: 0,
+  history: {}
+};
+
+const DEFAULT_ATOMIC_HABITS: AtomicHabit[] = [
+  {
+    id: 'habit_cold_shower',
+    title: 'Cold Shower / Contrast Wash',
+    category: 'health',
+    icon: 'Droplets',
+    statTarget: 'discipline',
+    xpReward: 15,
+    currentStreak: 0,
+    bestStreak: 0,
+    history: {},
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'habit_meditation',
+    title: '10-Min Mindfulness & Breath',
+    category: 'mindset',
+    icon: 'Brain',
+    statTarget: 'focus',
+    xpReward: 15,
+    currentStreak: 0,
+    bestStreak: 0,
+    history: {},
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'habit_coding_problem',
+    title: '1 Coding / Logic Problem',
+    category: 'learning',
+    icon: 'Terminal',
+    statTarget: 'knowledge',
+    xpReward: 20,
+    currentStreak: 0,
+    bestStreak: 0,
+    history: {},
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'habit_posture_stretch',
+    title: 'Spine & Hip Flexor Stretch',
+    category: 'fitness',
+    icon: 'Activity',
+    statTarget: 'recovery',
+    xpReward: 15,
+    currentStreak: 0,
+    bestStreak: 0,
+    history: {},
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'habit_gratitude_journal',
+    title: 'Daily Micro-Journal / Gratitude',
+    category: 'mindset',
+    icon: 'Edit3',
+    statTarget: 'awareness',
+    xpReward: 15,
+    currentStreak: 0,
+    bestStreak: 0,
+    history: {},
+    createdAt: new Date().toISOString()
+  }
+];
+
+const DEFAULT_DAILY_PROTOCOLS: DailyProtocolsState = {
+  date: new Date().toISOString().split('T')[0],
+  morning: {
+    isCompleted: false,
+    xpClaimed: false,
+    steps: [
+      { id: 'm_hydrate', title: 'Hydrate 500ml', subtitle: 'Electrolytes & clean water upon waking', icon: 'Droplets', isCompleted: false },
+      { id: 'm_sunlight', title: '5-10 Min Outdoor Sunlight', subtitle: 'Sets your circadian clock & dopamine', icon: 'Sun', isCompleted: false },
+      { id: 'm_timetable', title: 'Review Today\'s Schedule', subtitle: 'Confirm college/study blocks & deep work', icon: 'Calendar', isCompleted: false },
+      { id: 'm_bed', title: 'Reset Workspace & Make Bed', subtitle: 'Discipline checkpoint to start the day', icon: 'Sparkles', isCompleted: false }
+    ]
+  },
+  evening: {
+    isCompleted: false,
+    xpClaimed: false,
+    steps: [
+      { id: 'e_scratchpad', title: 'Clear Scratchpad & Loose Tasks', subtitle: 'Brain dump everything so your mind rests', icon: 'FileText', isCompleted: false },
+      { id: 'e_tomorrow', title: 'Set Tomorrow\'s Timetable Mode', subtitle: 'College, Exam, or Personal focus plan', icon: 'CalendarDays', isCompleted: false },
+      { id: 'e_breathe', title: '5-Min Box Breathing / Wind Down', subtitle: 'Lower heart rate & parasympathetic calm', icon: 'Wind', isCompleted: false }
+    ]
+  }
+};
+
 class StorageService {
   private getItem<T>(key: string, defaultValue: T): T {
     try {
@@ -2122,7 +2224,10 @@ class StorageService {
       fitnessProfile: this.getFitnessProfile(),
       progressionStates: this.getProgressionStates(),
       benchmarkRecords: this.getBenchmarkRecords(),
-      fitnessSessions: this.getCompletedFitnessSessions()
+      fitnessSessions: this.getCompletedFitnessSessions(),
+      hydrationState: this.getHydrationState(),
+      atomicHabits: this.getAtomicHabits(),
+      dailyProtocols: this.getDailyProtocols()
     };
     return JSON.stringify(fullData, null, 2);
   }
@@ -2188,7 +2293,10 @@ class StorageService {
       fitnessProfile: fitnessProfile || this.getFitnessProfile(),
       progressionStates: input.progressionStates && typeof input.progressionStates === 'object' && !Array.isArray(input.progressionStates) ? input.progressionStates : this.getProgressionStates(),
       benchmarkRecords: Array.isArray(input.benchmarkRecords) ? input.benchmarkRecords : this.getBenchmarkRecords(),
-      fitnessSessions: Array.isArray(input.fitnessSessions) ? input.fitnessSessions : this.getCompletedFitnessSessions()
+      fitnessSessions: Array.isArray(input.fitnessSessions) ? input.fitnessSessions : this.getCompletedFitnessSessions(),
+      hydrationState: input.hydrationState && typeof input.hydrationState === 'object' ? input.hydrationState : this.getHydrationState(),
+      atomicHabits: Array.isArray(input.atomicHabits) ? input.atomicHabits : this.getAtomicHabits(),
+      dailyProtocols: input.dailyProtocols && typeof input.dailyProtocols === 'object' ? input.dailyProtocols : this.getDailyProtocols()
     };
 
     return {
@@ -2231,6 +2339,9 @@ class StorageService {
       if (data.progressionStates) this.saveProgressionStates(data.progressionStates);
       if (data.benchmarkRecords) this.setItem(STORAGE_KEYS.BENCHMARK_RECORDS, data.benchmarkRecords);
       if (data.fitnessSessions) this.setItem(STORAGE_KEYS.FITNESS_SESSIONS, data.fitnessSessions);
+      if (data.hydrationState) this.saveHydrationState(data.hydrationState);
+      if (data.atomicHabits) this.saveAtomicHabits(data.atomicHabits);
+      if (data.dailyProtocols) this.saveDailyProtocols(data.dailyProtocols);
 
       const msg = validation.message
         ? `Backup restored successfully! (${validation.message})`
@@ -2350,6 +2461,229 @@ class StorageService {
     return trimmed;
   }
 
+  // ==========================================
+  // HYDRATION TRACKER
+  // ==========================================
+  public getHydrationState(): HydrationState {
+    const today = new Date().toISOString().split('T')[0];
+    const saved = this.getItem<HydrationState>(STORAGE_KEYS.HYDRATION, DEFAULT_HYDRATION_STATE);
+
+    if (saved.date !== today) {
+      const history = saved.history || {};
+      history[saved.date] = saved.currentMl;
+
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      const isYesterdayMet = (history[yesterday] || 0) >= (saved.targetMl || 3000);
+      const newStreak = isYesterdayMet ? (saved.streak || 0) : 0;
+
+      const rolledOver: HydrationState = {
+        date: today,
+        targetMl: saved.targetMl || 3000,
+        currentMl: 0,
+        streak: newStreak,
+        lastCompletedDate: saved.lastCompletedDate,
+        history
+      };
+      this.setItem(STORAGE_KEYS.HYDRATION, rolledOver);
+      return rolledOver;
+    }
+    return saved;
+  }
+
+  public saveHydrationState(state: HydrationState): void {
+    this.setItem(STORAGE_KEYS.HYDRATION, state);
+  }
+
+  public updateHydration(deltaMl: number): { state: HydrationState; xpAwarded?: number } {
+    const state = this.getHydrationState();
+    const prev = state.currentMl;
+    const target = state.targetMl || 3000;
+    const updatedMl = Math.max(0, prev + deltaMl);
+    state.currentMl = updatedMl;
+
+    let xpAwarded: number | undefined;
+
+    const alreadyMet = state.lastCompletedDate === state.date;
+    if (updatedMl >= target && !alreadyMet) {
+      state.lastCompletedDate = state.date;
+      state.streak = (state.streak || 0) + 1;
+      xpAwarded = 25;
+
+      const profile = this.getProfile();
+      profile.currentXP += 25;
+      profile.totalXP += 25;
+      profile.todayXP += 25;
+      profile.stats.recovery = Math.min(100, (profile.stats.recovery || 10) + 1);
+      this.saveProfile(profile);
+
+      this.addXPTransaction({
+        id: `xp_hyd_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount: 25,
+        source: 'routine',
+        description: `Daily Hydration Target Met (${target}ml)`,
+        statTarget: 'recovery'
+      });
+    }
+
+    this.saveHydrationState(state);
+    return { state, xpAwarded };
+  }
+
+  public setHydrationTarget(targetMl: number): HydrationState {
+    const state = this.getHydrationState();
+    state.targetMl = Math.max(1000, Math.min(6000, targetMl));
+    this.saveHydrationState(state);
+    return state;
+  }
+
+  // ==========================================
+  // ATOMIC MICRO-HABITS
+  // ==========================================
+  public getAtomicHabits(): AtomicHabit[] {
+    return this.getItem<AtomicHabit[]>(STORAGE_KEYS.ATOMIC_HABITS, DEFAULT_ATOMIC_HABITS);
+  }
+
+  public saveAtomicHabits(habits: AtomicHabit[]): void {
+    this.setItem(STORAGE_KEYS.ATOMIC_HABITS, habits);
+  }
+
+  public toggleHabit(habitId: string, targetDate?: string): { habit: AtomicHabit; habits: AtomicHabit[]; xpAwarded?: number } {
+    const habits = this.getAtomicHabits();
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) {
+      throw new Error(`Habit not found: ${habitId}`);
+    }
+
+    const date = targetDate || new Date().toISOString().split('T')[0];
+    const isNowDone = !habit.history[date];
+    let xpAwarded: number | undefined;
+
+    if (isNowDone) {
+      habit.history[date] = true;
+      habit.currentStreak = (habit.currentStreak || 0) + 1;
+      if (habit.currentStreak > (habit.bestStreak || 0)) {
+        habit.bestStreak = habit.currentStreak;
+      }
+      xpAwarded = habit.xpReward || 15;
+
+      const profile = this.getProfile();
+      profile.currentXP += xpAwarded;
+      profile.totalXP += xpAwarded;
+      profile.todayXP += xpAwarded;
+      const stat = habit.statTarget || 'discipline';
+      profile.stats[stat] = Math.min(100, (profile.stats[stat] || 10) + 1);
+      this.saveProfile(profile);
+
+      this.addXPTransaction({
+        id: `xp_habit_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount: xpAwarded,
+        source: 'routine',
+        description: `Habit Completed: ${habit.title}`,
+        statTarget: stat
+      });
+    } else {
+      delete habit.history[date];
+      habit.currentStreak = Math.max(0, (habit.currentStreak || 1) - 1);
+    }
+
+    this.saveAtomicHabits(habits);
+    return { habit, habits, xpAwarded };
+  }
+
+  public addCustomHabit(habitData: Omit<AtomicHabit, 'id' | 'currentStreak' | 'bestStreak' | 'history' | 'createdAt'>): AtomicHabit {
+    const habits = this.getAtomicHabits();
+    const newHabit: AtomicHabit = {
+      ...habitData,
+      id: `habit_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      currentStreak: 0,
+      bestStreak: 0,
+      history: {},
+      createdAt: new Date().toISOString()
+    };
+    habits.push(newHabit);
+    this.saveAtomicHabits(habits);
+    return newHabit;
+  }
+
+  public deleteHabit(habitId: string): AtomicHabit[] {
+    const habits = this.getAtomicHabits().filter(h => h.id !== habitId);
+    this.saveAtomicHabits(habits);
+    return habits;
+  }
+
+  // ==========================================
+  // CIRCADIAN DAILY PROTOCOLS
+  // ==========================================
+  public getDailyProtocols(targetDate?: string): DailyProtocolsState {
+    const today = targetDate || new Date().toISOString().split('T')[0];
+    const saved = this.getItem<DailyProtocolsState>(STORAGE_KEYS.DAILY_PROTOCOLS, DEFAULT_DAILY_PROTOCOLS);
+
+    if (saved.date !== today) {
+      const fresh: DailyProtocolsState = {
+        date: today,
+        morning: {
+          isCompleted: false,
+          xpClaimed: false,
+          steps: DEFAULT_DAILY_PROTOCOLS.morning.steps.map(s => ({ ...s, isCompleted: false }))
+        },
+        evening: {
+          isCompleted: false,
+          xpClaimed: false,
+          steps: DEFAULT_DAILY_PROTOCOLS.evening.steps.map(s => ({ ...s, isCompleted: false }))
+        }
+      };
+      this.setItem(STORAGE_KEYS.DAILY_PROTOCOLS, fresh);
+      return fresh;
+    }
+    return saved;
+  }
+
+  public saveDailyProtocols(protocols: DailyProtocolsState): void {
+    this.setItem(STORAGE_KEYS.DAILY_PROTOCOLS, protocols);
+  }
+
+  public toggleProtocolStep(type: 'morning' | 'evening', stepId: string): { state: DailyProtocolsState; xpAwarded?: number } {
+    const state = this.getDailyProtocols();
+    const section = state[type];
+    const step = section.steps.find(s => s.id === stepId);
+
+    if (!step) return { state };
+
+    step.isCompleted = !step.isCompleted;
+    step.completedAt = step.isCompleted ? new Date().toISOString() : undefined;
+
+    const allStepsCompleted = section.steps.every(s => s.isCompleted);
+    section.isCompleted = allStepsCompleted;
+
+    let xpAwarded: number | undefined;
+    if (allStepsCompleted && !section.xpClaimed) {
+      section.xpClaimed = true;
+      xpAwarded = 20;
+      const stat: StatType = type === 'morning' ? 'discipline' : 'recovery';
+
+      const profile = this.getProfile();
+      profile.currentXP += xpAwarded;
+      profile.totalXP += xpAwarded;
+      profile.todayXP += xpAwarded;
+      profile.stats[stat] = Math.min(100, (profile.stats[stat] || 10) + 1);
+      this.saveProfile(profile);
+
+      this.addXPTransaction({
+        id: `xp_proto_${type}_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount: xpAwarded,
+        source: 'routine',
+        description: `${type === 'morning' ? 'Morning Wake-Up' : 'Evening Shutdown'} Protocol Complete`,
+        statTarget: stat
+      });
+    }
+
+    this.saveDailyProtocols(state);
+    return { state, xpAwarded };
+  }
+
   public resetToDefaults(): void {
     localStorage.clear();
     this.saveProfile(DEFAULT_PROFILE);
@@ -2367,6 +2701,9 @@ class StorageService {
     this.setItem(STORAGE_KEYS.PROGRESSION_STATES, {});
     this.setItem(STORAGE_KEYS.BENCHMARK_RECORDS, DEFAULT_BENCHMARK_RECORDS);
     this.setItem(STORAGE_KEYS.FITNESS_SESSIONS, []);
+    this.saveHydrationState(DEFAULT_HYDRATION_STATE);
+    this.saveAtomicHabits(DEFAULT_ATOMIC_HABITS);
+    this.saveDailyProtocols(DEFAULT_DAILY_PROTOCOLS);
   }
 }
 

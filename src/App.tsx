@@ -282,6 +282,7 @@ export function App() {
                 exercises={exercises}
                 onNavigate={handleNavigate}
                 settings={settings}
+                onAwardXP={(amount, desc, stat) => handleAwardXP(amount, desc, stat)}
               />
             )}
 
