@@ -20,6 +20,7 @@ import { UserProfile, AppSettings } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
 import { cloudSync } from '../../services/supabaseService';
+import { gistSync } from '../../services/githubGistSyncService';
 import { BrandLogo } from '../common/BrandLogo';
 import { ThemePickerModal } from '../common/ThemePickerModal';
 
@@ -47,18 +48,27 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
   const [isMobileUtilityOpen, setIsMobileUtilityOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<'connected' | 'configured' | 'offline'>(() => {
-    if (cloudSync.getState().isAuthenticated) return 'connected';
+    if (gistSync.getState().isConfigured || cloudSync.getState().isAuthenticated) return 'connected';
     if (cloudSync.isConfigured()) return 'configured';
     return 'offline';
   });
 
   useEffect(() => {
-    const unsub = cloudSync.subscribe(st => {
-      if (st.isAuthenticated) setCloudStatus('connected');
-      else if (cloudSync.isConfigured()) setCloudStatus('configured');
-      else setCloudStatus('offline');
-    });
-    return unsub;
+    const update = () => {
+      if (gistSync.getState().isConfigured || cloudSync.getState().isAuthenticated) {
+        setCloudStatus('connected');
+      } else if (cloudSync.isConfigured()) {
+        setCloudStatus('configured');
+      } else {
+        setCloudStatus('offline');
+      }
+    };
+    const unsubCloud = cloudSync.subscribe(update);
+    const unsubGist = gistSync.subscribe(update);
+    return () => {
+      unsubCloud();
+      unsubGist();
+    };
   }, []);
 
   const openThemePicker = () => {

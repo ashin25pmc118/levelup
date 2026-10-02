@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Download,
@@ -20,6 +20,7 @@ import { UserProfile, AppSettings, Exercise } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
 import { cloudSync } from '../../../services/supabaseService';
+import { gistSync } from '../../../services/githubGistSyncService';
 import { THEME_OPTIONS, AppThemeType } from '../../common/ThemePickerModal';
 
 interface SettingsViewProps {
@@ -58,6 +59,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     message: ''
   });
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  // Cloud Sync Status State
+  const [cloudState, setCloudState] = useState(() => ({
+    gistConfigured: gistSync.getState().isConfigured,
+    gistUsername: gistSync.getState().username,
+    supabaseAuthenticated: cloudSync.getState().isAuthenticated,
+    supabaseConfigured: cloudSync.isConfigured()
+  }));
+
+  useEffect(() => {
+    const update = () => {
+      setCloudState({
+        gistConfigured: gistSync.getState().isConfigured,
+        gistUsername: gistSync.getState().username,
+        supabaseAuthenticated: cloudSync.getState().isAuthenticated,
+        supabaseConfigured: cloudSync.isConfigured()
+      });
+    };
+    const unsubGist = gistSync.subscribe(update);
+    const unsubCloud = cloudSync.subscribe(update);
+    return () => {
+      unsubGist();
+      unsubCloud();
+    };
+  }, []);
 
   // Handle Export Full Backup
   const handleExportFullBackup = () => {
@@ -322,22 +348,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* CLOUD DATABASE SYNC & MULTI-DEVICE BACKUP (SUPABASE) */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/40 border border-cyan-500/40 shadow-xl space-y-4">
+      {/* CLOUD DATABASE & GIST SYNC (DUAL PROVIDER) */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/30 border border-purple-500/40 shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-xl bg-cyan-950 border border-cyan-500/30 text-cyan-400">
+            <div className="p-2.5 rounded-xl bg-purple-950/80 border border-purple-500/30 text-purple-400">
               <Cloud className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">Cloud Database Sync (Supabase)</h3>
+                <h3 className="text-base font-bold text-white">Multi-Device Cloud Sync</h3>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30 uppercase">
                   100% Free
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Bi-directional sync across your phone and laptop without paying a cent.
+                Sync seamlessly across your phone, tablet, and PC via GitHub Private Gist or Supabase.
               </p>
             </div>
           </div>
@@ -347,7 +373,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               sounds.playClick();
               onOpenCloudSync?.();
             }}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
+            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
           >
             <Cloud className="w-4 h-4 stroke-[2.5]" />
             <span>Open Cloud Sync Hub</span>
@@ -358,19 +384,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
             <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Status</span>
             <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-              <span className={`w-2 h-2 rounded-full ${cloudSync.getState().isAuthenticated ? 'bg-emerald-400 animate-pulse' : cloudSync.isConfigured() ? 'bg-amber-400' : 'bg-slate-500'}`} />
-              <span>{cloudSync.getState().isAuthenticated ? 'Connected & Synced' : cloudSync.isConfigured() ? 'Configured (Sign in)' : 'Offline / Local Only'}</span>
+              <span className={`w-2 h-2 rounded-full ${cloudState.gistConfigured || cloudState.supabaseAuthenticated ? 'bg-emerald-400 animate-pulse' : cloudState.supabaseConfigured ? 'bg-amber-400' : 'bg-slate-500'}`} />
+              <span>
+                {cloudState.gistConfigured
+                  ? `Connected (GitHub @${cloudState.gistUsername || 'Gist'})`
+                  : cloudState.supabaseAuthenticated
+                  ? 'Connected (Supabase)'
+                  : cloudState.supabaseConfigured
+                  ? 'Configured (Sign in)'
+                  : 'Offline / Local Only'}
+              </span>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Database Provider</span>
-            <span className="text-xs font-bold text-cyan-300">Supabase Free Postgres</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Active Provider</span>
+            <span className="text-xs font-bold text-cyan-300">
+              {cloudState.gistConfigured ? '🐙 GitHub Private Gist' : cloudState.supabaseAuthenticated ? '⚡ Supabase Postgres' : 'None (Choose in Hub)'}
+            </span>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Privacy & Security</span>
-            <span className="text-xs font-bold text-emerald-400">Row-Level Security (RLS)</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Privacy & Architecture</span>
+            <span className="text-xs font-bold text-emerald-400">
+              {cloudState.gistConfigured ? 'Secret Gist (Encrypted PAT)' : cloudState.supabaseAuthenticated ? 'Postgres RLS Security' : 'Local-First Storage'}
+            </span>
           </div>
         </div>
       </div>
