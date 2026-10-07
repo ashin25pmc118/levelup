@@ -484,7 +484,7 @@ export function App() {
           />
         )}
 
-        {/* Supabase Free Multi-Device Cloud Sync Hub */}
+        {/* GitHub Private Gist Multi-Device Cloud Sync Hub */}
         {isCloudSyncOpen && (
           <CloudSyncModal
             isOpen={isCloudSyncOpen}

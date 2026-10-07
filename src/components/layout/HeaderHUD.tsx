@@ -19,7 +19,6 @@ import {
 import { UserProfile, AppSettings } from '../../types';
 import { getRequiredXPForLevel, getRankTier } from '../../services/rpgEngine';
 import { sounds } from '../../services/soundEffects';
-import { cloudSync } from '../../services/supabaseService';
 import { gistSync } from '../../services/githubGistSyncService';
 import { BrandLogo } from '../common/BrandLogo';
 import { ThemePickerModal } from '../common/ThemePickerModal';
@@ -47,28 +46,16 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
 }) => {
   const [isMobileUtilityOpen, setIsMobileUtilityOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
-  const [cloudStatus, setCloudStatus] = useState<'connected' | 'configured' | 'offline'>(() => {
-    if (gistSync.getState().isConfigured || cloudSync.getState().isAuthenticated) return 'connected';
-    if (cloudSync.isConfigured()) return 'configured';
-    return 'offline';
+  const [cloudStatus, setCloudStatus] = useState<'connected' | 'offline'>(() => {
+    return gistSync.getState().isConfigured ? 'connected' : 'offline';
   });
 
   useEffect(() => {
     const update = () => {
-      if (gistSync.getState().isConfigured || cloudSync.getState().isAuthenticated) {
-        setCloudStatus('connected');
-      } else if (cloudSync.isConfigured()) {
-        setCloudStatus('configured');
-      } else {
-        setCloudStatus('offline');
-      }
+      setCloudStatus(gistSync.getState().isConfigured ? 'connected' : 'offline');
     };
-    const unsubCloud = cloudSync.subscribe(update);
     const unsubGist = gistSync.subscribe(update);
-    return () => {
-      unsubCloud();
-      unsubGist();
-    };
+    return unsubGist;
   }, []);
 
   const openThemePicker = () => {
@@ -233,10 +220,8 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               className="relative p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-colors"
               title={
                 cloudStatus === 'connected'
-                  ? 'Cloud Database: Connected (Supabase)'
-                  : cloudStatus === 'configured'
-                  ? 'Cloud Database: Ready to Log In'
-                  : 'Cloud Database Sync (Supabase Free Tier)'
+                  ? `GitHub Gist Sync: Connected (@${gistSync.getState().username || 'Connected'})`
+                  : 'GitHub Private Gist Cloud Sync'
               }
             >
               <Cloud className="w-4 h-4 text-cyan-400" />
@@ -244,8 +229,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 className={`absolute top-1 right-1 w-2 h-2 rounded-full ${
                   cloudStatus === 'connected'
                     ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50 animate-pulse'
-                    : cloudStatus === 'configured'
-                    ? 'bg-amber-400'
                     : 'bg-slate-600'
                 }`}
               />
@@ -457,18 +440,16 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white block">Cloud Database Sync</span>
+                    <span className="text-xs font-bold text-white block">GitHub Private Gist Sync</span>
                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
                       cloudStatus === 'connected'
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
-                        : cloudStatus === 'configured'
-                        ? 'bg-amber-950 text-amber-400 border border-amber-500/30'
+                        ? 'bg-purple-950 text-purple-300 border border-purple-500/30'
                         : 'bg-slate-800 text-slate-400'
                     }`}>
-                      {cloudStatus === 'connected' ? 'Connected' : cloudStatus === 'configured' ? 'Login Needed' : 'Local Only'}
+                      {cloudStatus === 'connected' ? 'Connected' : 'Local Only'}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400">Sync phone & PC with free Supabase</span>
+                  <span className="text-[10px] text-slate-400">Sync phone & PC with GitHub Secret Gist</span>
                 </div>
               </button>
             </div>

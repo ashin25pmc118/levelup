@@ -19,7 +19,6 @@ import {
 import { UserProfile, AppSettings, Exercise } from '../../../types';
 import { storage } from '../../../services/storageService';
 import { sounds } from '../../../services/soundEffects';
-import { cloudSync } from '../../../services/supabaseService';
 import { gistSync } from '../../../services/githubGistSyncService';
 import { THEME_OPTIONS, AppThemeType } from '../../common/ThemePickerModal';
 
@@ -60,29 +59,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   });
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  // Cloud Sync Status State
-  const [cloudState, setCloudState] = useState(() => ({
-    gistConfigured: gistSync.getState().isConfigured,
-    gistUsername: gistSync.getState().username,
-    supabaseAuthenticated: cloudSync.getState().isAuthenticated,
-    supabaseConfigured: cloudSync.isConfigured()
-  }));
+  // GitHub Gist Cloud Sync State
+  const [gistState, setGistState] = useState(() => gistSync.getState());
 
   useEffect(() => {
-    const update = () => {
-      setCloudState({
-        gistConfigured: gistSync.getState().isConfigured,
-        gistUsername: gistSync.getState().username,
-        supabaseAuthenticated: cloudSync.getState().isAuthenticated,
-        supabaseConfigured: cloudSync.isConfigured()
-      });
-    };
-    const unsubGist = gistSync.subscribe(update);
-    const unsubCloud = cloudSync.subscribe(update);
-    return () => {
-      unsubGist();
-      unsubCloud();
-    };
+    const unsub = gistSync.subscribe(s => setGistState({ ...s }));
+    return unsub;
   }, []);
 
   // Handle Export Full Backup
@@ -348,7 +330,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* CLOUD DATABASE & GIST SYNC (DUAL PROVIDER) */}
+      {/* GITHUB PRIVATE GIST CLOUD SYNC */}
       <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/30 border border-purple-500/40 shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
@@ -357,13 +339,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">Multi-Device Cloud Sync</h3>
+                <h3 className="text-base font-bold text-white">GitHub Private Gist Cloud Sync</h3>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30 uppercase">
                   100% Free
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Sync seamlessly across your phone, tablet, and PC via GitHub Private Gist or Supabase.
+                Sync seamlessly across your phone, tablet, and PC via your own private GitHub Gist.
               </p>
             </div>
           </div>
@@ -373,10 +355,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               sounds.playClick();
               onOpenCloudSync?.();
             }}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
+            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 hover:from-purple-400 hover:to-indigo-400 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
           >
             <Cloud className="w-4 h-4 stroke-[2.5]" />
-            <span>Open Cloud Sync Hub</span>
+            <span>Open GitHub Sync Hub</span>
           </button>
         </div>
 
@@ -384,30 +366,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
             <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Status</span>
             <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-              <span className={`w-2 h-2 rounded-full ${cloudState.gistConfigured || cloudState.supabaseAuthenticated ? 'bg-emerald-400 animate-pulse' : cloudState.supabaseConfigured ? 'bg-amber-400' : 'bg-slate-500'}`} />
+              <span className={`w-2 h-2 rounded-full ${gistState.isConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
               <span>
-                {cloudState.gistConfigured
-                  ? `Connected (GitHub @${cloudState.gistUsername || 'Gist'})`
-                  : cloudState.supabaseAuthenticated
-                  ? 'Connected (Supabase)'
-                  : cloudState.supabaseConfigured
-                  ? 'Configured (Sign in)'
+                {gistState.isConfigured
+                  ? `Connected (@${gistState.username || 'GitHub'})`
                   : 'Offline / Local Only'}
               </span>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Active Provider</span>
-            <span className="text-xs font-bold text-cyan-300">
-              {cloudState.gistConfigured ? '🐙 GitHub Private Gist' : cloudState.supabaseAuthenticated ? '⚡ Supabase Postgres' : 'None (Choose in Hub)'}
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Storage Provider</span>
+            <span className="text-xs font-bold text-purple-300">
+              {gistState.isConfigured ? '🐙 GitHub Secret Gist' : 'Local Storage Only'}
             </span>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Privacy & Architecture</span>
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Privacy & Security</span>
             <span className="text-xs font-bold text-emerald-400">
-              {cloudState.gistConfigured ? 'Secret Gist (Encrypted PAT)' : cloudState.supabaseAuthenticated ? 'Postgres RLS Security' : 'Local-First Storage'}
+              Secret Gist (Encrypted PAT)
             </span>
           </div>
         </div>
